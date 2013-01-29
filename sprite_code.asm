@@ -2,6 +2,8 @@
 ; Place a sprite on the screen
 ; IY = address of sprite parameters
 
+; ************* Erase and draw a sprite 2 bytes wide
+
 place_2bsprite  proc
 
                 ld a,2
@@ -196,6 +198,7 @@ restoresp:      ld sp,0
 
                 retp
 
+; ************* Erase and draw a sprite 3 bytes wide
 
 place_3bsprite  proc
 
@@ -203,57 +206,107 @@ place_3bsprite  proc
                 out (254),a
 
                 ld (restoresp+1),sp
-
+                
                 ld sp,iy                ; point stack at sprite parameter list
-                pop hl                  ; retrieve position in scan line table
-                ld a,h
-                or a
-
-                pop de                  ; retrieve sprite data source
+                pop de                  ; retrieve screen address for erasure
+                pop hl                  ; retrieve sprite data source
                 pop bc                  ; retrieve column and height
+                ld a,d
+                or a
                 jr z,no_erase
 
-                ld (restoresp0+1),sp
-                ld sp,hl                ; now point to the scan line table
+                ld (erase_sp+1),sp
+                ld sp,hl
+                ex de,hl
 erase:
-                pop hl                  ; retrieve scan line position in display file
-                ld a,l
-                or c                    ; add column offset
-                ld l,a
+                pop de
 
-                ld a,(de)
-                cpl                     ; invert A to create mask
+                ld a,e
+                cpl                     
                 and (hl)
                 ld (hl),a
                 inc l
-                inc de 
 
-                ld a,(de)
-                cpl                     ; invert A to create mask
-                and (hl)
-                ld (hl),a
-                inc l
-                inc de 
-
-                ld a,(de)
+                ld a,d
                 cpl
                 and (hl)
                 ld (hl),a
-                inc de
+                inc l
 
+                pop de
+
+                ld a,e
+                cpl                     
+                and (hl)
+                ld (hl),a
+                
+                ; increment pixel line code from Cobra, thanks Joffa!
+                inc h                           
+                ld a,h
+                and $07
+                jr nz,nxteraseline0
+                ld a,l
+                add a,$20
+                ld l,a
+                jr c,nxteraseline0
+                ld a,h
+                sub $08
+                ld h,a
+nxteraseline0:
+                dec b
+                jr z,erase_done
+
+                dec l
+                dec l
+
+                ld a,d
+                cpl                     
+                and (hl)
+                ld (hl),a
+                inc l
+        
+                pop de
+
+                ld a,e
+                cpl
+                and (hl)
+                ld (hl),a
+                inc l
+
+                ld a,d
+                cpl                     
+                and (hl)
+                ld (hl),a
+                dec l
+                dec l
+                
+                ; increment pixel line code from Cobra, thanks Joffa!
+                inc h                           
+                ld a,h
+                and $07
+                jr nz,nxteraseline1
+                ld a,l
+                add a,$20
+                ld l,a
+                jr c,nxteraseline1
+                ld a,h
+                sub $08
+                ld h,a
+
+nxteraseline1:                
                 djnz erase
+erase_done:
+                ld (iy+spr_dst+1),b     ; clear high byte of screen address to denote erase done
 
-                ld (iy+spr_dst+1),b
-
-restoresp0:     ld sp,0                 ; restore stack to sprite parameter block
+erase_sp:       ld sp,0
 
 no_erase:
                 ld a,1
                 out (254),a
 
                 pop ix                  ; retrieve address of sprite descriptor table
-
                 pop hl                  ; retrieve X position
+
                 ld de,(landscape_ofs)
                 xor a
                 sbc hl,de               ; calculate offset of sprite relative to screen
@@ -268,7 +321,7 @@ no_erase:
                 and a
                 jp nz,restoresp
                 ld a,h
-                cp 240
+                cp 248
                 jp nc,restoresp
 
                 ld b,a                  ; calculate preshift offset
@@ -297,15 +350,18 @@ frmixop:        ld de,(0)               ; ED 5B xx xx
                 ld (iy+spr_src),l
                 ld (iy+spr_src+1),h     ; Save for erase
 
-                ex de,hl                ; protect HL
-                pop hl                  ; get y position
-                ld l,h
-                ld h,scanlinetable/512
+                pop de                  ; get y position
+
+                ld sp,hl                ; all parameters retrieve, now point stack to sprite data
+
+                ex de,hl                ; move y position into HL
+                ld l,h                  ; and convert to screen address
+                ld h,(HIGH scanlinetable)/2
                 add hl,hl
-                ld sp,hl                ; first lookup position in scan line table for y position
-                ld (iy+spr_dst),l
-                ld (iy+spr_dst+1),h     ; save for erase
-                ex de,hl                ; recover HL
+                ld a,(hl)
+                inc l
+                ld h,(hl)
+                ld l,a
 
                 ld a,b                 ; get x position again, divide by 8 to get column
                 srl a
@@ -317,68 +373,114 @@ frmixop:        ld de,(0)               ; ED 5B xx xx
                 ld a,7
                 out (254),a
 
-                pop de          ; get top scanline for first line of attributes
-                dec sp
-                dec sp
-
-                ld a,e
+                ld a,l
                 or c
-                ld e,a          ; merge column (0 - 31) offset
+                ld l,a          ; merge column (0 - 31) offset
 
-                ld a,d
+                ld (iy+spr_dst),l
+                ld (iy+spr_dst+1),h     ; save for erase
+
+                ld a,h                  ; convert screen address to attr address
                 srl a
                 srl a
                 srl a
                 or $50
-                ld d,a
+                ld h,a
                 ld a,(ix+sprd_attr)
-                ld (de),a
-                inc e
-                ld (de),a
-                inc e
-                ld (de),a
+                ld (hl),a
+                inc l
+                ld (hl),a
+                inc l
+                ld (hl),a
 
                 ld b,(ix+sprd_height)
                 ld (iy+spr_h),b
+
+                ld l,(iy+spr_dst)       ; Get screen address back into HL
+                ld h,(iy+spr_dst+1) 
 printline:
-                pop de          ; get address of scanline
+                pop de                  ; get two bytes of sprite data
+
                 ld a,e
-                or c
-                ld e,a          ; merge column (0 - 31) offset
-
-                ld a,(de)       ; get 1 byte of sprite data and XOR to screen
                 or (hl)
-                ld (de),a
-                inc hl
-                inc e
-
-                ld a,(de)       ; do another byte
-                or (hl)
-                ld (de),a
-                inc hl
-                inc e
-
-                ld a,(de)       ; do another byte
-                or (hl)
-                ld (de),a
-                inc hl
-
-                djnz printline
-
-; Do attribute blocks
+                ld (hl),a
+                inc l
 
                 ld a,d
+                or (hl)
+                ld (hl),a
+                inc l
+
+                pop de
+
+                ld a,e
+                or (hl)
+                ld (hl),a
+                
+                inc h
+                ld a,h
+                and $07
+                jr nz,nxtprintline0
+                ld a,l
+                add a,$20
+                ld l,a
+                jr c,nxtprintline0
+                ld a,h
+                sub $08
+                ld h,a
+nxtprintline0:
+                dec b
+                jr z,print_done
+
+                dec l
+                dec l
+
+                ld a,d
+                or (hl)
+                ld (hl),a
+                inc l
+
+                pop de
+                
+                ld a,e
+                or (hl)
+                ld (hl),a
+                inc l
+
+                ld a,d
+                or (hl)
+                ld (hl),a
+
+                dec l
+                dec l
+                
+                inc h
+                ld a,h
+                and $07
+                jr nz,nxtprintline1
+                ld a,l
+                add a,$20
+                ld l,a
+                jr c,nxtprintline1
+                ld a,h
+                sub $08
+                ld h,a
+nxtprintline1:
+                djnz printline
+
+print_done:
+                ld a,h                  ; Do attribute blocks
                 srl a
                 srl a
                 srl a
                 or $50
-                ld d,a
+                ld h,a
                 ld a,(ix+1)
-                ld (de),a
-                dec e
-                ld (de),a
-                dec e
-                ld (de),a
+                ld (hl),a
+                inc l
+                ld (hl),a
+                inc l
+                ld (hl),a
 
 restoresp:      ld sp,0
 
