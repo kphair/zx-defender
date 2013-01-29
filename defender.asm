@@ -255,7 +255,7 @@ test_fire:      ld a,127
                 add hl,de
                 ld a,(hl)
                 or a
-                jp nz,no_fire
+                jp nz,fire_slots_full
                                 
 ; get screen address of space in front of ship
 fire_slot:      push hl                 ; save HL
@@ -402,7 +402,7 @@ next_shot:      ld de,5
                 add ix,de
                 dec b
                 jp nz,test_shot
-
+fire_slots_full:                
                 xor a
                 out (254),a
 
@@ -427,10 +427,10 @@ no_fire:
 
                 include "sprite_macro.asm"
                 include "sprite_code.asm"
-                include "sprite_data.asm"
+                include "landscape.asm"
                 include "charset.asm"
                 include "screen.asm"
-                include "landscape.asm"
+                include "sprite_data.asm"
 
 rand0:          dw 13*73-1
 rand1:          dw 23*97-1

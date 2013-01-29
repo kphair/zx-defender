@@ -278,7 +278,149 @@ restore_sp      ld sp,0
                 xor a
                 out (254),a
                 retp
+
+
+; ************* Update twinkling starfield (x positions are a quarter of screen offset)
                 
+showstars       proc
+
+                ld a,3
+                out (254),a
+
+                ld (restoresp+1),sp
+                ld sp,starfield_data
+do_star:
+                pop hl                  ; retrieve last screen address
+                ld a,h
+                or a
+                jp m,restoresp          ; bit 7 set if table end
+                jr nz,erase_star
+                
+                pop af
+                pop af
+                pop af
+                jr init_star
+erase_star:
+                pop af                  ; retrieve pixel mask
+                and (hl)
+                ld (hl),a               ; erase pixel
+
+                pop hl                  ; retrieve star X
+                ld b,h
+                ld l,e                  ; save copy in BC
+                ld de,(landscape_ofs)
+                sbc hl,de               ; subtract current landscape offset
+
+                pop de                  ; retrieve timer and y position
+                ld a,e
+                or a                    ; if timer is zero then generate new star position
+                jr nz,animate_star
+
+init_star:
+                exx
+                ld hl,(rand0)
+                ld de,(rand1)
+                ld  a,e         ; w = w ^ ( w << 3 )
+                add a,a
+                add a,a
+                add a,a
+                xor e
+                ld  e,a
+                ld  a,h         ; t = x ^ (x << 1)
+                add a,a
+                xor h
+                ld  d,a
+                rra             ; t = t ^ (t >> 1) ^ w
+                xor d
+                xor e
+                ld  h,l         ; y = z
+                ld  l,a         ; w = t
+                ld (rand0),de
+                ld (rand1),hl
+                exx
+
+                ld bc,(rand0)           ; get new star position
+                ld a,b
+                and $3f
+                rla
+                or $40                  ; generate a semi-random timer value between $40 and $7f
+                ld e,a
+                
+                ld a,(rand1)
+                ld l,a
+                and $7f
+                add a,$20                 ; generate a semi-random y value between $20 and $9f
+                ld d,a                
+
+animate_star:
+                dec e
+                push de                 ; E = timer, D = y position
+                push bc                 ; save X position back through stack
+
+                ; get HL/128 % 256
+                add hl,hl
+                ld a,h
+                and 7                   ; pixel offset within column
+                
+                ld b,HIGH pixel_masks   ; convert pixel offset to pixel mask
+                or LOW pixel_masks
+                ld c,a
+                ld a,(bc)
+                ld b,a                  ; save mask in B
+                push af                 ; store pixel mask for erasure on next frame
+
+                ld a,h
+                srl a
+                srl a
+                srl a
+                ld c,a                  ; column offset = X position/8
+                
+                ld h,(HIGH scanlinetable)/2
+                ld l,d                  ; get y position in D
+                add hl,hl
+                ld a,(hl)               ; look up screen address for y position
+                inc l
+                ld h,(hl)
+                or c                    ; merge column offset for new screen address
+                ld l,a
+
+                ld a,b                  ; retrieve pixel mask
+                cpl                     ; invert it to generate actual pixel
+                or (hl)                 ; merge with screen byte
+                ld (hl),a               ; and put back to screen
+                push hl                 ; save screen address for erasure on next frame
+
+                ld a,h                  ; convert screen to attr position
+                rra
+                rra
+                rra
+                and 7
+                or $58
+                ld h,a                  
+                
+                ld a,e                  ; retrieve timer saved in E
+                srl a
+                srl a
+                srl a
+                srl a                   ; divide by 16 to create colour
+                jr nz,stillvisible      ; check to make sure colour isn't black
+                ld a,3
+stillvisible:
+                ld (hl),a
+
+                ld hl,8
+                add hl,sp
+                ld sp,hl
+
+                jp do_star
+end_stars:
+restoresp:      ld sp,0
+                                
+                xor a
+                out (254),a
+                      
+                retp
+
 
 align 2
 
@@ -327,159 +469,21 @@ starfield_data: dw 0,0,0,0
                 dw 0,0,0,0
                 dw 0,0,0,0
                 dw $ffff,$ffff,$ffff,$ffff
-
-showstars       proc
-
-                ld a,3
-                out (254),a
-
-                ld (restoresp+1),sp
-                ld sp,starfield_data
-do_star:
-                pop hl                  ; retrieve last screen address
-                ld a,h
-                cp 255                  ; end of table
-                jp z,restoresp
-                or a                    ; uninitialised entry
-                jr nz,erase_star
                 
-                pop af
-                pop af
-                pop af
-                ld l,d
-                jr init_star
-erase_star:
-                pop af                  ; retrieve pixel mask
-                and (hl)
-                ld (hl),a               ; erase pixel
-                ld b,h
-                ld c,l                  ; copy HL to BC
-
-                pop hl                  ; retrieve star X
-                ld de,(thrust+1)
-                xor a
-                sbc hl,de               ; subtract current thrust level
-                pop de                  ; retrieve timer and y position
-        
-                ld a,e
-                or a                    ; if timer is zero then generate new star position
-                jr nz,animate_star
-
-                ld a,b                  ; convert screen to attr position
-                rra
-                rra
-                rra
-                and 7
-                or $58
-                ld h,a                  
-                ld l,c
-                ld (hl),3
-
-init_star:
-                exx
-                ld hl,(rand0)
-                ld de,(rand1)
-                ld  a,e         ; w = w ^ ( w << 3 )
-                add a,a
-                add a,a
-                add a,a
-                xor e
-                ld  e,a
-                ld  a,h         ; t = x ^ (x << 1)
-                add a,a
-                xor h
-                ld  d,a
-                rra             ; t = t ^ (t >> 1) ^ w
-                xor d
-                xor e
-                ld  h,l         ; y = z
-                ld  l,a         ; w = t
-                ld (rand0),de
-                ld (rand1),hl
-                exx
-
-                ld hl,(rand0)
-                ld a,h
-                and $3f
-                rla
-                or $40                  ; generate a semi-random timer value between $40 and $7f
-                ld e,a
-                
-                ld a,(rand1)
-                ld l,a
-                and $7f
-                add a,$20                 ; generate a semi-random y value between $20 and $9f
-                ld d,a                
-
-animate_star:
-                dec e
-                push de                 ; E = timer, D = y position
-                push hl                 ; store updated X position
-
-                xor a                   
-                add hl,hl
-                rla
-                add hl,hl               
-                rla                     ; AH = HL/64
-
-                ld a,h
-                and 7                   ; pixel offset within column
-
-                inc a                   ; increment for djnz loop
-                ld b,a
-                ld a,%11111110
-align_pixel:    rrca                    ; rotate byte right B times
-                djnz align_pixel
-                ld b,a                  ; save mask in B
-                push af                 ; store pixel mask for erasure on next frame
-
-                ld a,h
-                srl a
-                srl a
-                srl a
-                ld c,a                  ; column offset = X position/8
-                
-                ld h,(HIGH scanlinetable)/2
-                ld l,d                  ; get y position in D
-                add hl,hl
-                ld a,(hl)               ; look up screen address for y position
-                inc l
-                ld h,(hl)
-                or c                    ; merge column offset for new screen address
-                ld l,a
-                ld a,b                  ; retrieve pixel mask
-                cpl                     ; invert it
-                or (hl)
-                ld (hl),a
-                push hl                 ; save screen address for erasure on next frame
-
-                ld a,h                  ; convert screen to attr position
-                rra
-                rra
-                rra
-                and 7
-                or $58
-                ld h,a                  
-                
-                ld a,e                  ; retrieve timer saved in E
-                srl a
-                srl a
-                srl a
-                srl a                   ; divide by 16 to create colour
-                jr nz,stillvisible      ; check to make sure colour isn't black
-                inc a                   
-stillvisible:
-                ld (hl),a
-
-                ld hl,8
-                add hl,sp
-                ld sp,hl
-
-                jp do_star
-end_stars:
-restoresp:      ld sp,0
-                                
-                xor a
-                out (254),a
-                      
-                retp
+                align 16
+pixel_masks:    db %01111111
+                db %10111111
+                db %11011111
+                db %11101111
+                db %11110111
+                db %11111011
+                db %11111101
+                db %11111110
+pixel_bits:     db %10000000
+                db %01000000
+                db %00100000
+                db %00010000
+                db %00001000
+                db %00000100
+                db %00000010
+                db %00000001
