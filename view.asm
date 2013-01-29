@@ -40,7 +40,8 @@ chk_pan_left:   ld bc,200*32            ; subtract the desired ship offset (200*
                 add hl,hl
                 add hl,hl
                 ex de,hl
-                add hl,de
+                or a
+                sbc hl,de
                 sbc hl,bc
                 jp p,no_pan_left
                 ld de,-3*32
@@ -55,7 +56,7 @@ no_pan_left:    ld hl,(thrust+1)        ; calculate thrust * 8
                 ld hl,(sprship+spr_x)   ; subtract 200*32 from ship_x
                 or a
                 sbc hl,bc
-                add hl,de               ; add thrust to offset ship from right edge of screen with increasing thrust
+                sbc hl,de               ; add thrust to offset ship from right edge of screen with increasing thrust
                 jr fix_camera_x
 
 ; if the ship is facing right, do we need to pan right to bring it to the left side of screen

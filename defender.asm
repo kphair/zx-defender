@@ -249,7 +249,7 @@ test_thrust:
                 ld l,a
                 ld h,HIGH noise
                 ld a,(hl)
-                and 16+32
+                and 16+8
                 out (254),a
 
                 ld a,(ship_dir)
@@ -299,6 +299,7 @@ thrust_left:
                 jr nc,thrust_left_pos
 
                 add hl,de
+                ccf
                 sbc a,c
                 sbc hl,bc
                 sbc a,c
@@ -306,8 +307,9 @@ thrust_left:
 
 thrust_left_pos:                
                 or a
+                ex de,hl
                 sbc hl,de
-                sbc a,0
+                sbc a,c
                 sbc hl,bc
                 sbc a,c
                 ;jr set_thrust
@@ -340,26 +342,27 @@ exhaust_vis:
 
 
                 ; apply friction to ship thrust
+                ; thrust = thrust - (thrust + $000100)/256
 
-                ld a,(thrust+1)
+                ld a,(thrust+1)         ; middle byte
                 cpl
                 ld l,a
-                ld a,(thrust+2)
+                ld a,(thrust+2)         ; high byte
                 ld c,a
                 cpl
                 ld h,a
-                inc hl
+                inc hl                  ; HL = -(middle and high byte)
                 xor a
                 bit 7,h
                 jr z,thrust_pos
-                dec a
+                cpl
 thrust_pos:
                 ld b,a
                 ld a,h
                 add hl,hl
                 add hl,hl
                 ex de,hl
-                ld hl,(thrust)
+                ld hl,(thrust)          ; low and middle byte
                 add hl,de
                 ld a,c
                 adc a,b
