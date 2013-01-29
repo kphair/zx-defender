@@ -424,7 +424,7 @@ restoresp:      ld sp,0
 align 2
 
 landscape_ofs:	dw 0		; Current offset
-landscape_lofs:	dw 0		; Last offset (for erase run)
+landscape_lofs:	dw 0		; Last offset (for erase run or last frame differencing)
 
 thrust:         db 0,0,0
 
@@ -519,8 +519,8 @@ scanner_map2:   dg -----#-------------------------------------------------------
 ; Max height of original is 74 so bring it down to 55. Every 8 pixels jump back down 2 so this should keep the
 ; original diagonals-only look
 ;
-height_remap:   db 00,01,02,03,04,05,06,07      ;  0 -  7
-                db 06,07, 8, 9,10,11,12,13      ;  8 - 15
+height_remap:   db  0, 1, 2, 3, 4, 5, 6, 7      ;  0 -  7
+                db  6, 7, 8, 9,10,11,12,13      ;  8 - 15
                 db 12,13,14,15,16,17,18,19      ; 16 - 23
                 db 18,19,20,21,22,23,24,25      ; 24 - 31
                 db 24,25,26,27,28,28,30,31      ; 32 - 39
@@ -529,4 +529,3 @@ height_remap:   db 00,01,02,03,04,05,06,07      ;  0 -  7
                 db 42,43,44,45,46,47,48,49      ; 56 - 63
                 db 48,49,50,51,52,53,54,55      ; 64 - 71
                 db 54,55,56,57,58,59,60,61      ; 72 - 80
-

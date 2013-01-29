@@ -1,27 +1,16 @@
-; Sprite parameters
-; 0     dw address of sprite descriptor
-; 2     db frame number
-; 3     db unused
-; 4,6   dw x position, y position
-; 8,10  dw x delta, y delta
-;       The following are populated by the sprite lookup for erasure process
-; 12    dw scanline list first line position
-; 14    dw sprite data source
-; 16    db bit 0-5 = number of lines high, bit 7-8 = bytes wide
-; 17    db column position
-
-spr_dst equ 0
-spr_src equ 2
-spr_col equ 4
-spr_h   equ 5
-
-spr_dsc equ 6
-spr_x   equ 8
-spr_pad equ 10
-spr_frm equ 11
-spr_y   equ 12
-spr_dx  equ 14
-spr_dy  equ 16
+; Sprite parameter records
+;
+spr_dst         equ 0   ; dw scanline list first line position
+spr_src         equ 2   ; dw sprite data source
+spr_col         equ 4   ; db column position
+spr_h           equ 5   ; db bit 0-5 = number of lines high, bit 7-8 = bytes wide
+spr_dsc         equ 6   ; dw address of sprite descriptor
+spr_x           equ 8   ; dw x position
+spr_pad         equ 10  ; db unused
+spr_frm         equ 11  ; db frame number
+spr_y           equ 12  ; dw x position
+spr_dx          equ 14  ; x delta
+spr_dy          equ 16  ; y delta
 
 spr0:           dw 0,0,0
                 dw spr_lander
@@ -116,15 +105,13 @@ sprexhaust:     dw 0,0,0
                 dw $8000
                 dw 0,0
 
-
-; db frames, attribute, width, height
-; dw frame0 address offset, frame1 address offset, ...
-
-sprd_frames     equ 0
-sprd_attr       equ 1
-sprd_width      equ 2
-sprd_height     equ 3
-sprd_frame0     equ 4
+; Sprite descriptor records
+;
+sprd_frames     equ 0   ; db frames
+sprd_attr       equ 1   ; db attribute
+sprd_width      equ 2   ; db width (bytes)
+sprd_height     equ 3   ; db height (lines)
+sprd_frame0     equ 4   ; db frame 1 address offset in preshift bank
 
 spritelist:
 

@@ -79,31 +79,55 @@ inthandler:
                 do_3bsprite(spr11)
                 do_2bsprite(spr12)        ; pod
 
-                ld hl,(sprship+spr_x)
-                ld de,-(9*32)
+
+                ; Display the ship exhaust and main sprite
+                ; ship_offset is positive is ship is facing right, negative if left
+                ; ship_offset is the desired pixel offset from the edge of the screen
+                ; 
+
+                ld a,(ship_dir)
+                bit 7,a
+                jr nz,ship_left
+
+                ; Ship is facing right
+
+                ld hl,spr_shipr         ; set ship sprite facing right
+                ld (sprship+spr_dsc),hl
+                ld de,-(9*32)           ; position exhaust 9 pixels left of the ship
+                jr ship_right
+
+ship_left:      ld hl,spr_shipl         ; set ship sprite facing left
+                ld (sprship+spr_dsc),hl
+                ld de,(17*32)           ; position exhaust 17 pixels right of the ship
+
+ship_right:
+                ; set exhaust x position
+                ld hl,(sprship+spr_x) 
                 add hl,de
                 ld (sprexhaust+spr_x),hl
-
+                ; set exhaust y position
                 ld hl,(sprship+spr_y)
                 ld (sprexhaust+spr_y),hl
-
+                ; draw the exhaust
                 ld iy,sprexhaust
                 call place_2bsprite
                 ld a,(iy+spr_frm)
                 inc a                   ; increment frame number
                 cp (ix)                 ; compare to max number of frames in sprite descriptor
-                jr c, upd_exhaust
-                xor a
-upd_exhaust:    ld (iy+spr_frm),a
+                ld b,a                  ; reset to 0 if no carry
+                sbc a,a
+                and b
+                ld (iy+spr_frm),a
 
                 ld iy,sprship
                 call place_3bsprite
                 ld a,(iy+spr_frm)
                 inc a                   ; increment frame number
                 cp (ix)                 ; compare to max number of frames in sprite descriptor
-                jr c,upd_ship
-                xor a
-upd_ship:       ld (iy+spr_frm),a
+                ld b,a
+                sbc a,a
+                and b
+                ld (iy+spr_frm),a
 
                 move_lander(spr0)
                 move_lander(spr1)
@@ -196,7 +220,7 @@ move_down:      ld (sprship+spr_y),hl
 ; ************* Test for thrust key pressed
 
 test_thrust:    
-                ; always decelerate first (friction?)
+                ; always run deceleration algorithm (friction)
 
                 ld a,(thrust+1)
                 cpl
@@ -481,22 +505,55 @@ fire_slots_full:
 
 no_fire:
 
-; ************* Add the current thrust level (middle and high bytes) to the landscape offset
+; ************* Add the current thrust level (middle and high bytes) to the ship's x position
 
-                ld hl,(landscape_ofs)
+; Calculate new landscape offset from ship_x:
+; add thrust to ship_x
+; add thrust to landscape_ofs
+; subtract desired screen edge offset (40 or 216) from ship_x and compare to landscape_ofs
+; if <0 then subtract 2 pixels (64) from landscape_ofs
+; if >0 then add 2 pixels to landscape_ofs
+                
+
                 ld de,(thrust+1)
-                add hl,de
-		ld (landscape_ofs),hl
 
-                ex de,hl
-                add hl,hl
-                add hl,hl
-                add hl,hl
-                ex de,hl
-                add hl,de
-                ld de,40*32
+                ld hl,(sprship+spr_x)
                 add hl,de
 		ld (sprship+spr_x),hl
+
+                ld hl,(landscape_ofs)
+                ld (landscape_lofs),hl
+                add hl,de
+                ld (landscape_ofs),hl
+
+                ld de,40*32             ; first, add the left margin between the screen edge and the ship
+                add hl,de
+
+                ld de,(sprship+spr_x)   ; subtract ship_x
+                sbc hl,de
+                
+                ld de,(ship_dir)
+                xor a
+                sbc hl,de
+                ld de,64
+                jr nc,pan_right         ; ship is more right than it should be so pan right
+                ld de,-64                
+                jr nz,pan_right         ; if spot-on don't make any adjustments
+                ld de,0                
+pan_right:      ld hl,(landscape_ofs)
+                add hl,de
+                ld (landscape_ofs),hl
+                
+
+;                ex de,hl
+;                add hl,hl
+;                add hl,hl
+;                add hl,hl
+;                ex de,hl
+;                add hl,de
+;                ld de,40*32
+;                add hl,de
+;                ld (sprship+spr_x),hl
                 
                 ei
                 reti
@@ -534,5 +591,6 @@ shots_table     db 0,0,0,0,0
 lastfire:       db 0                    ; used to keep track of the last state of the fire button
 
 thrustnoise:    db 0
+ship_dir:       dw 40*32
 
 ends:           dw 0
