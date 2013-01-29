@@ -423,11 +423,6 @@ restoresp:      ld sp,0
 
 align 2
 
-camera_x:	dw 0		; Current offset
-camera_lastx:	dw 0		; Last offset (for erase run or last frame differencing)
-
-thrust:         db 0,0,0
-
 landscape_diffs: ds (2048+256)*2
 
 landscape_bin:  db $2A,$AA,$AA,$AA,$AA,$AA,$AB,$A1,$D5,$55,$55,$55,$55,$55,$AA,$BF

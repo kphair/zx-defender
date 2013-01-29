@@ -199,5 +199,5 @@ fire_slots_full:
                 out (254),a
 
 no_fire:
-
                 retp
+

@@ -493,20 +493,6 @@ restoresp:      ld sp,0
 
                 retp
 
-
-
-; Preshift bank offsets
-align 16
-preshift0:      dw spritedatastart+(preshiftdata-spritedatastart)*0
-preshift1:      dw spritedatastart+(preshiftdata-spritedatastart)*1
-preshift2:      dw spritedatastart+(preshiftdata-spritedatastart)*2
-preshift3:      dw spritedatastart+(preshiftdata-spritedatastart)*3
-preshift4:      dw spritedatastart+(preshiftdata-spritedatastart)*4
-preshift5:      dw spritedatastart+(preshiftdata-spritedatastart)*5
-preshift6:      dw spritedatastart+(preshiftdata-spritedatastart)*6
-preshift7:      dw spritedatastart+(preshiftdata-spritedatastart)*7
-
-
 ; Read the sprite list and create preshifted versions of all the sprites
 ; A table will be generated with the start address of each preshifted bank
 
