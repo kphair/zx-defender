@@ -35,9 +35,9 @@ main:           halt
                 org $8181                
 inthandler:
 
+                call showstars
                 call erase_landscape
                 call draw_landscape
-                call showstars
 
                 do_2bsprite(spr0)         ; landers
                 do_2bsprite(spr1)
@@ -197,11 +197,6 @@ test_thrust:    ld a,127
 no_thrust:
                 ld hl,spr_idler
                 ld (sprexhaust+spr_dsc),hl
-                inc hl
-                ld a,r
-                xor (hl)
-                and 7
-                ld (hl),a
                 
                 ld hl,(thrust+1)
                 ld a,h
@@ -219,6 +214,9 @@ end_thrust:     ld hl,(sprexhaust+spr_dsc)
                 ld a,r
                 xor (hl)
                 and 7
+                jr nz,exhaust_vis
+                inc a
+exhaust_vis:
                 ld (hl),a
 
 ; ************* Test for fire button
@@ -307,17 +305,18 @@ test_shot:
                 or a
                 jp z,next_shot
 
-                ld e,(ix)               ; main counter
-                inc e
-                ld (ix),e
+                ld e,a
 
                 ld h,(ix+1)
                 ld l,(ix+2)             ; pulse moves one byte every frame
 
                 ld a,l
                 and $1f
-                jr z,last_frame
-                ld (hl),%11110000
+                jr z,last_frame         ; if on the last frame, skip the pulse
+                cp 1
+                jr z,clear_shot
+
+                ld (hl),%10111100
                 ld a,h
                 and $f8
                 rra
@@ -328,14 +327,14 @@ test_shot:
                 ld (hl),$47
 
                 ld a,e
-                cp 2
-                jr z,first_frame
+                cp 1
+                jr z,first_frame        ; If first frame, skip the first solid trail
 
                 ld h,(ix+1)
                 ld l,(ix+2)
 last_frame:
                 dec l
-                ld (hl),$ff
+                ld (hl),$ff             ; for every frame other than the first one, draw a solid trail behind the pulse
 
                 ld a,h
                 and $f8
@@ -357,13 +356,11 @@ first_frame:
                 ld (ix+2),l
                 ld a,l
                 and $1f                 
-                cp 1
-                jr z,clear_shot         ; has it wrapped around edge
 
-check_trail:                
+;check_trail:                
                 ld a,e
                 and 3
-                cp 1
+                cp 0
                 jr z,do_wipe            ; trail moves three out of every 4 frames
                 ld l,(ix+3)
                 ld h,(ix+1)
@@ -385,7 +382,6 @@ do_wipe:
                 ld (hl),0
                 inc l
                 ld (ix+4),l                
-
                 jr next_shot
 
 clear_shot:     ld l,(ix+4)             ; continue wipe to the edge of screen
@@ -398,7 +394,9 @@ wipe_shot:      ld (hl),c
                 and $1f
                 jr nz,wipe_shot
                 
-next_shot:      ld de,5
+next_shot:      
+                inc (ix)               ; main counter
+                ld de,5
                 add ix,de
                 dec b
                 jp nz,test_shot

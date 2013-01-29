@@ -307,7 +307,7 @@ erase_star:
 
                 pop hl                  ; retrieve star X
                 ld b,h
-                ld l,e                  ; save copy in BC
+                ld c,l                  ; save copy in BC
                 ld de,(landscape_ofs)
                 sbc hl,de               ; subtract current landscape offset
 
