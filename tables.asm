@@ -7,14 +7,15 @@ shots_table     db 0,0,0,0,0
 
 ; Preshift bank offsets
 align 16
-preshift0:      dw spritedatastart+(preshiftdata-spritedatastart)*0
-preshift1:      dw spritedatastart+(preshiftdata-spritedatastart)*1
-preshift2:      dw spritedatastart+(preshiftdata-spritedatastart)*2
-preshift3:      dw spritedatastart+(preshiftdata-spritedatastart)*3
-preshift4:      dw spritedatastart+(preshiftdata-spritedatastart)*4
-preshift5:      dw spritedatastart+(preshiftdata-spritedatastart)*5
-preshift6:      dw spritedatastart+(preshiftdata-spritedatastart)*6
-preshift7:      dw spritedatastart+(preshiftdata-spritedatastart)*7
+banksize = preshiftdata-spritedatastart
+preshift0:      dw spritedatastart + banksize * 0
+preshift1:      dw spritedatastart + banksize * 1
+preshift2:      dw spritedatastart + banksize * 2
+preshift3:      dw spritedatastart + banksize * 3
+preshift4:      dw spritedatastart + banksize * 4
+preshift5:      dw spritedatastart + banksize * 5
+preshift6:      dw spritedatastart + banksize * 6
+preshift7:      dw spritedatastart + banksize * 7
 
 align 16
 firefade:       dg ---#---###-#-###----#--#-#---#-##-#-#------##--#-##----#-##--#-#

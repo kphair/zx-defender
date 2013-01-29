@@ -256,35 +256,53 @@ exhaust_vis:    ld (hl),a
 ;************** Apply friction to thrust model so constant deceleration force is applied
 ship_friction   proc
 
-                ; apply friction to ship thrust
-                ; thrust = thrust - (thrust + $000100)/256
+                ; apply friction to ship: thrust = thrust - thrust/1024
 
-                ld a,(thrust+1)         ; middle byte
-                cpl
-                ld l,a
-                ld a,(thrust+2)         ; high byte
-                ld c,a
-                cpl
-                ld h,a
-                inc hl                  ; HL = -(middle and high byte)
-
-                ld a,h                  ; A = +1 or -1 depending on sign of H
-                rla                     ; move bit 7 into carry
-                sbc a,a                 ; extend carry into all of A
-                or 1                    ; and OR 1 to make A=$FF or $01
-                
-                ld b,a
+                ld hl,(thrust+1)
                 ld a,h
+                rla
+                sbc a,a         ; extend sign of H into A
+                ld b,a
+
                 add hl,hl
                 add hl,hl
-                ex de,hl
-                ld hl,(thrust)          ; low and middle byte
-                add hl,de
-                ld a,c
-                adc a,b
+                ld d,h
+                ld e,l         
+
+                ld hl,(thrust)
+                ld a,(thrust+2)
+                sbc hl,de
+                sbc a,b
+
                 ld (thrust),hl
                 ld (thrust+2),a
         
                 retp
 
+; OLD FRICTION CODE
+
+;                ld a,(thrust+1)
+;                cpl
+;                ld l,a
+;                ld a,(thrust+2)
+;                ld c,a         ; C  = high byte
+;                cpl
+;                ld h,a
+;                inc hl         ; HL = -(thrust middle and high)
+;                xor a
+;                bit 7,h
+;                jr z,thrust_pos
+;                dec a          ; extend sign of H into A
+;thrust_pos:
+;                ld b,a
+;                ld a,h
+;                add hl,hl
+;                add hl,hl
+;                ex de,hl
+;                ld hl,(thrust)
+;                add hl,de
+;                ld a,c
+;                adc a,b
+;                ld (thrust),hl
+;                ld (thrust+2),a
                 

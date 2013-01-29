@@ -228,8 +228,14 @@ spr_bomb:       db 20,$05,2,3
                 dw bomb1-spritedatastart
                 dw bomb1-spritedatastart
 
-spr_humanoid:   db 1,$07,2,8
-                dw humanoid0-spritedatastart
+spr_humanoidl0: db 1,$07,2,8
+                dw humanoidl0-spritedatastart
+spr_humanoidl1: db 1,$07,2,8
+                dw humanoidl1-spritedatastart
+spr_humanoidr0: db 1,$07,2,8
+                dw humanoidr0-spritedatastart
+spr_humanoidr1: db 1,$07,2,8
+                dw humanoidr1-spritedatastart
 
 spr_shipr:      db 15,$07,3,6
                 dw shipr0-spritedatastart
@@ -489,7 +495,7 @@ bomb1:
                 dg -#--------------
                 dg ###-------------
                 dg -#--------------
-humanoid0:
+humanoidl0:
                 dg ##--------------
                 dg ##--------------
                 dg ###-------------
@@ -498,6 +504,33 @@ humanoid0:
                 dg -#--------------
                 dg -#--------------
                 dg -#--------------
+humanoidl1:
+                dg ##--------------
+                dg ##--------------
+                dg ###-------------
+                dg ###-------------
+                dg ###-------------
+                dg ##--------------
+                dg ##--------------
+                dg ##--------------
+humanoidr0:
+                dg -##-------------
+                dg -##-------------
+                dg ###-------------
+                dg ###-------------
+                dg ###-------------
+                dg -#--------------
+                dg -#--------------
+                dg -#--------------
+humanoidr1:
+                dg -##-------------
+                dg -##-------------
+                dg ###-------------
+                dg ###-------------
+                dg ###-------------
+                dg -##-------------
+                dg -##-------------
+                dg -##-------------
 baiter0:
                 dg --#######---------------
                 dg -##--#--##--------------
