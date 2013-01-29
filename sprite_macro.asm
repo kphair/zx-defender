@@ -78,7 +78,7 @@ move_lander     macro(sprp)
                 ; only update direction if on frame 1
                 ld a,(sprp+spr_frm)
                 or a
-                jr nz, end_move
+                jr nz,end_move
 
                 ld hl,(sprp+spr_x)
 
@@ -90,6 +90,8 @@ move_lander     macro(sprp)
                 add hl,hl
                 rla
                 ld d,a
+                ld a,h
+                and $fe
                 ld e,h
 
                 ld hl,landscape_data            ; height map
@@ -101,50 +103,24 @@ move_lander     macro(sprp)
                 add a,191                       ; convert to origin at screen bottom
                 sub b                           ; subtract ground height
                 
-                cp 24
-                jr c,move_up                    ; less than 24 pixels above ground start moving up
-                cp 28
-                jr c,stop_vertical              ; less than 28 pixels above ground stop moving down
+                cp 50
+                jr nc,move_down                
+                cp 20
+                jr c,move_up                    ; less than 28 pixels above ground stop moving down
 
-                ld hl,(sprp+spr_dy)
-                ld a,h
-                rla                             ; shift sign of A into carry
-                jr c,stop_vertical              ; if minus then movement is upward so stop
+                ld hl,0                         ; set speed to 0
+                jr set_dy
 
-                or l                            ; is dy 0
-                jr nz,end_move                  ; if not, leave unchanged
+move_down:      ld hl,$00b0
+                jr set_dy
 
-                ld hl,(sprp+spr_dx)
-                ld a,h                          ; test sign of HL
-                rla
-                jr nc,dx_pos                    
-                ex de,hl
-                ld hl,0
-                sbc hl,de                       ; make HL positive
-dx_pos:         add hl,hl
-                add hl,hl
-                add hl,hl
-                ld (sprp+spr_dy),hl             ; set dy
-                jr end_move
+move_up:        ld hl,-$00b0
 
-move_up:        ld hl,(sprp+spr_dx)
-                ld a,h
-                rla
-                jr c,dx_neg                     ; if dx is positive change its sign by subtracting from 0
-                ex de,hl
-                ld hl,0
-                sbc hl,de
-                add hl,hl
-                add hl,hl
-                add hl,hl
-
-dx_neg:         ld (sprp+spr_dy),hl             ; and save it into dy
-                jr end_move
-
-stop_vertical:  ld hl,0
-                ld (sprp+spr_dy),hl
-                                                                                 
+set_dy:         ld (sprp+spr_dy),hl
 end_move        mend
+
+
+; ************* Macro for bomber movement
 
 move_bomber     macro(sprp)
 

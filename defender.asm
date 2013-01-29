@@ -160,43 +160,69 @@ move_down:      ld (sprship+spr_y),hl
                 
 	
 ; ************* Test for thrust key pressed
+
+test_thrust:    
+                ; always decelerate first (friction?)
+
+                ld a,(thrust+1)
+                cpl
+                ld l,a
+                ld a,(thrust+2)
+                ld c,a
+                cpl
+                ld h,a
+                inc hl
+                xor a
+                bit 7,h
+                jr z,thrust_pos
+                dec a
+thrust_pos:
+                ld b,a
+                ld a,h
+                add hl,hl
+                add hl,hl
+                ex de,hl
+                ld hl,(thrust)
+                add hl,de
+                ld a,c
+                adc a,b
+                ld (thrust),hl
+                ld (thrust+2),a
         
-test_thrust:    ld a,127
+                ld a,127
 		in a,(254)
 		and %00001000
-		jr nz,no_thrust               ; If no thrust then go to deceleration
+		jr nz,no_thrust               ; If no thrust then turn the exhaust down
 
                 ld a,(rand0)
-                ld b,a
-                ld a,r
-                add a,b
+                inc a
+                ld (rand0),a
+                ld l,a
+                ld h,HIGH noise
+                ld a,(hl)
                 and 16
                 out (254),a
 
                 ld hl,spr_thrustr
                 ld (sprexhaust+spr_dsc),hl
 
+                ; Thrust = Thrust + (Thrust + $000300) 
+
                 ld hl,(thrust+1)
-                ld a,h
-                cp $1
-                jr nz,more_thrust
-                ld l,0
-                ld (thrust+1),hl
-                jr end_thrust
-more_thrust:
-
-                inc l
-                inc l
-                inc l
+                inc h
+                inc h
+                inc h
                 
-                ld de,(thrust)
+                ld de,(thrust+0)
                 add hl,de
-                ld a,h
+                ld a,(thrust+2)
                 adc a,0
-                      
-                ld (thrust),hl
                 ld (thrust+2),a
-
+                jr z,thrust_ok
+                ld hl,0
+thrust_ok:                
+                ld (thrust+0),hl
+                
                 xor a
                 out (254),a
                 jr end_thrust
@@ -204,17 +230,6 @@ no_thrust:
                 ld hl,spr_idler
                 ld (sprexhaust+spr_dsc),hl
                 
-                ld hl,(thrust+1)
-                ld a,h
-                add hl,hl
-                add hl,hl
-                ex de,hl
-                ld hl,(thrust)
-                sbc hl,de
-                sbc a,0
-                ld (thrust),hl
-                ld (thrust+2),a
-
 end_thrust:     ld hl,(sprexhaust+spr_dsc)
                 inc hl
                 ld a,r
@@ -431,6 +446,9 @@ fire_slots_full:
                 out (254),a
 
 no_fire:
+
+; ************* Add the current thrust level (middle and high bytes) to the landscape offset
+
                 ld hl,(landscape_ofs)
                 ld de,(thrust+1)
                 add hl,de
@@ -442,7 +460,7 @@ no_fire:
                 add hl,hl
                 ex de,hl
                 add hl,de
-                ld de,48*32
+                ld de,40*32
                 add hl,de
 		ld (sprship+spr_x),hl
                 
@@ -454,6 +472,8 @@ no_fire:
                 include "landscape.asm"
                 include "charset.asm"
                 include "screen.asm"
+                include "screen_data.asm"
+                include "sound_data.asm"
                 include "sprite_data.asm"
 
                 align 16
