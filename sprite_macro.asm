@@ -1,3 +1,4 @@
+
 do_2bsprite     macro(sprp)
         
                 ld iy,sprp
@@ -56,12 +57,12 @@ no_reset:       ld (iy+spr_frm),a
                 ld a,h
                 cp 32
                 jr nc,nowrapup
-                add a,160
+                add a,152
                 ld h,a
                 jr nowrapdown
-nowrapup:       cp 192
+nowrapup:       cp 184
                 jr c,nowrapdown
-                sub 160
+                sub 152
                 ld h,a
 nowrapdown:     ld (sprp+spr_y),hl
                 mend

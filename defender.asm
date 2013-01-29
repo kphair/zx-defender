@@ -85,20 +85,20 @@ inthandler:
                 ; ship_offset is the desired pixel offset from the edge of the screen
                 ; 
 
-                ld a,(ship_dir+1)
-                cp HIGH (128*32)
-                jr nc,ship_left
+                ld a,(ship_dir)
+                or a
+                jr nz,ship_left
 
                 ; Ship is facing right
 
                 ld hl,spr_shipr         ; set ship sprite facing right
                 ld (sprship+spr_dsc),hl
-                ld de,-(9*32)           ; position exhaust 9 pixels left of the ship
+                ld de,-9*32             ; position exhaust 9 pixels left of the ship
                 jr ship_right
 
 ship_left:      ld hl,spr_shipl         ; set ship sprite facing left
                 ld (sprship+spr_dsc),hl
-                ld de,(17*32)           ; position exhaust 17 pixels right of the ship
+                ld de,17*32             ; position exhaust 17 pixels right of the ship
 
 ship_right:
                 ; set exhaust x position
@@ -145,6 +145,35 @@ ship_right:
 sprites_done:   
 
 
+                ; decelerate the ship due to friction
+
+                ld a,(thrust+1)
+                cpl
+                ld l,a
+                ld a,(thrust+2)
+                ld c,a
+                cpl
+                ld h,a
+                inc hl
+                xor a
+                bit 7,h
+                jr z,thrust_pos
+                dec a
+thrust_pos:
+                ld b,a
+                ld a,h
+                add hl,hl
+                add hl,hl
+                ex de,hl
+                ld hl,(thrust)
+                add hl,de
+                ld a,c
+                adc a,b
+                ld (thrust),hl
+                ld (thrust+2),a
+        
+
+
                 call test_controls
 
 ; ************* Test for BREAK
@@ -160,23 +189,25 @@ sprites_done:
 
 ; ************* Test for reverse
 
-test_reverse:   ld a,%11111110
-                in a,(254)
-                and %00000010           ; Z
+test_reverse:   ld a,(controls)
+                and ctrl_reverse
+                jr z,test_up
+                ld a,(lastcontrols)     ; only reverse if the control has previously been released
+                and ctrl_reverse
                 jr nz,test_up
-                ld a,(ship_dir+1)
-                cp HIGH (128*32)        ; carry if facing right
-                ld de,40*32             ; face right
-                jr nc,do_reverse
-                ld de,216*32            ; face left
-do_reverse:     ld (ship_dir),de
+
+                ld a,(ship_dir)
+                cpl
+do_reverse:     ld (ship_dir),a
 
 ; ************* Test for up key pressed
 
-test_up:        ld a,%11111011
-		in a,(254)          
-                and %00000001           ; Q
-		jr z,up_pressed
+test_up:        ld a,(controls)
+                and ctrl_up
+		jr nz,up_pressed
+
+                ; if up not pressed then check to see if it previously was and stop moving
+
                 ld a,(sprship+spr_dy+1) 
                 rla                     ; test if dy is negative (ship moving up from last keypress)
                 jr nc,test_down
@@ -205,10 +236,9 @@ move_up:        ld (sprship+spr_y),hl
 
 ; ************* Test for down key pressed
 
-test_down:      ld a,%11111101
-		in a,(254)
-                and %00000001           ; Z
-		jr z,down_pressed
+test_down:      ld a,(controls)
+                and ctrl_down
+		jr nz,down_pressed
 
                 ld a,(sprship+spr_dy+1) 
                 or a                    ; test if dy is positive and non-zero (ship moving down)
@@ -239,37 +269,9 @@ move_down:      ld (sprship+spr_y),hl
 ; ************* Test for thrust key pressed
 
 test_thrust:    
-                ; always run deceleration algorithm (friction)
-
-                ld a,(thrust+1)
-                cpl
-                ld l,a
-                ld a,(thrust+2)
-                ld c,a
-                cpl
-                ld h,a
-                inc hl
-                xor a
-                bit 7,h
-                jr z,thrust_pos
-                dec a
-thrust_pos:
-                ld b,a
-                ld a,h
-                add hl,hl
-                add hl,hl
-                ex de,hl
-                ld hl,(thrust)
-                add hl,de
-                ld a,c
-                adc a,b
-                ld (thrust),hl
-                ld (thrust+2),a
-        
-                ld a,127
-		in a,(254)
-		and %00001000
-		jr nz,no_thrust               ; If no thrust then turn the exhaust down
+                ld a,(controls)
+		and ctrl_thrust
+		jr z,no_thrust               ; If no thrust then turn the exhaust down
 
                 ld a,(rand0)
                 inc a
@@ -277,10 +279,15 @@ thrust_pos:
                 ld l,a
                 ld h,HIGH noise
                 ld a,(hl)
-                and 16
+                and 16+32
                 out (254),a
 
+                ld a,(ship_dir)
+                or a
                 ld hl,spr_thrustr
+                jr z,thrust_r
+                ld hl,spr_thrustl
+thrust_r:
                 ld (sprexhaust+spr_dsc),hl
 
                 ; Thrust = Thrust + (Thrust + $000300) 
@@ -305,6 +312,11 @@ thrust_ok:
                 jr end_thrust
 no_thrust:
                 ld hl,spr_idler
+                ld a,(ship_dir)
+                or a
+                jr z,idle_r
+                ld hl,spr_idlel
+idle_r:
                 ld (sprexhaust+spr_dsc),hl
                 
 end_thrust:     ld hl,(sprexhaust+spr_dsc)
@@ -326,40 +338,27 @@ exhaust_vis:
                 shot_pulse      equ 2
                 shot_fade       equ 3
                 shot_wipe       equ 4
-
-test_fire:      ld a,127
-		in a,(254)
-		and %00000100
-                ex af,af'
-                ld a,(lastfire)
-                ld b,a
-                ex af,af'
-                ld (lastfire),a
-		jr nz,animate_shots
                 
-                cp b
-                jr z,animate_shots      ; if there was no button transition just animate any existing shots
+test_fire:      ld a,(controls)
+		and ctrl_fire
+                jr nz,animate_shots     ; if fire not pressed just animate any existing shots
+                ld a,(lastcontrols)
+                and ctrl_fire
+                jr z,animate_shots      ; only fire new shots if this is a new instance of the control
 
                 ld a,5
                 out (254),a
 
                 ld hl,shots_table       ; search for a free slot from 4 available
                 ld de,5
-                ld a,(hl)
+                ld b,4
+
+find_fire_slot: ld a,(hl)
                 or a
                 jr z,fire_slot
                 add hl,de
-                ld a,(hl)
-                or a
-                jr z,fire_slot
-                add hl,de
-                ld a,(hl)
-                or a
-                jr z,fire_slot
-                add hl,de
-                ld a,(hl)
-                or a
-                jp nz,fire_slots_full
+                djnz find_fire_slot
+                jp fire_slots_full
                                 
 ; get screen address of space in front of ship
 fire_slot:      push hl                 ; save HL
@@ -545,49 +544,35 @@ no_fire:
                 add hl,de
                 ld (landscape_ofs),hl
 
-                ld de,40*32             ; first, add the left margin between the screen edge and the ship
-                add hl,de
-
                 ld de,(sprship+spr_x)   ; subtract ship_x
-                sbc hl,de
-                ld de,(ship_dir)       ; then subtract the ship offset from screen edge
+                ex de,hl
+                or a
                 sbc hl,de
                 
                 ld de,0
-                ld a,(ship_dir+1)
-                cp HIGH (128*32)        ; if carry then ship is facing right, so see if we need to pan right
-                jr c,check_pan_right
+
+                ld a,(ship_dir)
+                or a
+                jr z,check_pan_right
 
                 ; ship is facing left, do we need to pan left to bring to the right side of screen
 check_pan_left: 
-                bit 7,h                 
-                jr z,do_pan
-                ld de,-(2*32)
+                ld bc,216*32            ; subtract the ship offset from screen edge
+                sbc hl,bc
+                jr nc,do_pan
+                ld de,-3*32
                 jr do_pan
 
                 ; ship is facing right, do we need to pan right to bring it to the left side of screen
 check_pan_right:                        
-                ld a,h
-                or l
-                jr z,do_pan
-                ld de,2*32
-                
+                ld bc,40*32             ; subtract the ship offset from screen edge
+                sbc hl,bc
+                jr c,do_pan
+                ld de,3*32
 do_pan:
                 ld hl,(landscape_ofs)
-                add hl,de
+                add hl,de                
                 ld (landscape_ofs),hl
-
-no_pan:                
-
-;                ex de,hl
-;                add hl,hl
-;                add hl,hl
-;                add hl,hl
-;                ex de,hl
-;                add hl,de
-;                ld de,40*32
-;                add hl,de
-;                ld (sprship+spr_x),hl
                 
                 ei
                 reti
@@ -599,7 +584,7 @@ quit:           di
                 im 1
 basic_sp:       ld sp,0
                 pop iy
-                pop iy
+                pop ix
                 ei
                 ret
 
@@ -623,7 +608,6 @@ shots_table     db 0,0,0,0,0
                 db 0,0,0,0,0
                 db 0,0,0,0,0
                 db 0,0,0,0,0
-lastfire:       db 0            ; used to keep track of the last state of the fire button
 
 thrustnoise:    db 0
 

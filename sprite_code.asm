@@ -22,6 +22,8 @@ place_2bsprite  proc
                 ld (erase_sp+1),sp
                 ld sp,hl
                 ex de,hl
+
+                ld c,$07
 erase:
                 xor a
 ;                pop de
@@ -40,7 +42,7 @@ erase:
                 ; increment pixel line code from Cobra, thanks Joffa!
                 inc h                           
                 ld a,h
-                and $07
+                and c
                 jr nz,nxteraseline
                 ld a,l
                 add a,$20
@@ -66,6 +68,10 @@ no_erase:
                 xor a
                 sbc hl,de               ; calculate offset of sprite relative to screen
 
+                ld a,h                  ; is X within screen view
+                cp $1f                  ; 248 * 32 / 256
+                jp nc,restoresp
+
                 ; Shift HL into AHL -> AH = HL/32
                 add hl,hl
                 rla
@@ -73,12 +79,8 @@ no_erase:
                 rla
                 add hl,hl
                 rla
-                and a
-                jp nz,restoresp
-                ld a,h
-                cp 248
-                jp nc,restoresp
 
+                ld a,h
                 ld b,a                  ; calculate preshift offset
                 and 7
                 add a,a
@@ -107,7 +109,7 @@ frmixop:        ld de,(0)               ; ED 5B xx xx
 
                 pop de                  ; get y position
 
-                ld sp,hl                ; all parameters retrieve, now point stack to sprite data
+                ld sp,hl                ; all parameters retrieved, now point stack to sprite data
 
                 ex de,hl                ; move y position into HL
                 ld l,h                  ; and convert to screen address
@@ -151,6 +153,7 @@ frmixop:        ld de,(0)               ; ED 5B xx xx
 
                 ld l,(iy+spr_dst)       ; Get screen address back into HL
                 ld h,(iy+spr_dst+1) 
+                ld c,$07
 printline:
                 pop de                  ; get two bytes of sprite data
 
@@ -166,7 +169,7 @@ printline:
 
                 inc h
                 ld a,h
-                and $07
+                and c
                 jr nz,nxtprintline
                 ld a,l
                 add a,$20
@@ -218,6 +221,7 @@ place_3bsprite  proc
                 ld (erase_sp+1),sp
                 ld sp,hl
                 ex de,hl
+                ld c,7
 erase:
                 pop de
 
@@ -243,7 +247,7 @@ erase:
                 ; increment pixel line code from Cobra, thanks Joffa!
                 inc h                           
                 ld a,h
-                and $07
+                and c
                 jr nz,nxteraseline0
                 ld a,l
                 add a,$20
@@ -283,7 +287,7 @@ nxteraseline0:
                 ; increment pixel line code from Cobra, thanks Joffa!
                 inc h                           
                 ld a,h
-                and $07
+                and c
                 jr nz,nxteraseline1
                 ld a,l
                 add a,$20
@@ -311,6 +315,10 @@ no_erase:
                 xor a
                 sbc hl,de               ; calculate offset of sprite relative to screen
 
+                ld a,h
+                cp $1f
+                jp nc,restoresp
+
                 ; Shift HL into AHL -> AH = HL/32
                 add hl,hl
                 rla
@@ -318,11 +326,7 @@ no_erase:
                 rla
                 add hl,hl
                 rla
-                and a
-                jp nz,restoresp
                 ld a,h
-                cp 248
-                jp nc,restoresp
 
                 ld b,a                  ; calculate preshift offset
                 and 7
@@ -398,6 +402,7 @@ frmixop:        ld de,(0)               ; ED 5B xx xx
 
                 ld l,(iy+spr_dst)       ; Get screen address back into HL
                 ld h,(iy+spr_dst+1) 
+                ld c,$07
 printline:
                 pop de                  ; get two bytes of sprite data
 
@@ -419,7 +424,7 @@ printline:
                 
                 inc h
                 ld a,h
-                and $07
+                and c
                 jr nz,nxtprintline0
                 ld a,l
                 add a,$20
@@ -456,7 +461,7 @@ nxtprintline0:
                 
                 inc h
                 ld a,h
-                and $07
+                and c
                 jr nz,nxtprintline1
                 ld a,l
                 add a,$20

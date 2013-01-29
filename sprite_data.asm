@@ -284,8 +284,23 @@ spr_idler:      db 16,$06,2,6
                 dw idler0-spritedatastart
                 dw idler3-spritedatastart
                 
-spr_idlel:      db 1,$06,2,6
+spr_idlel:      db 16,$06,2,6
                 dw idlel0-spritedatastart
+                dw idlel0-spritedatastart
+                dw idlel1-spritedatastart
+                dw idlel0-spritedatastart
+                dw idlel1-spritedatastart
+                dw idlel1-spritedatastart
+                dw idlel2-spritedatastart
+                dw idlel1-spritedatastart
+                dw idlel2-spritedatastart
+                dw idlel2-spritedatastart
+                dw idlel3-spritedatastart
+                dw idlel2-spritedatastart
+                dw idlel3-spritedatastart
+                dw idlel3-spritedatastart
+                dw idlel0-spritedatastart
+                dw idlel3-spritedatastart
                 
 spr_thrustr:    db 16,$06,2,6
                 dw thrustr0-spritedatastart
@@ -305,7 +320,22 @@ spr_thrustr:    db 16,$06,2,6
                 dw thrustr3-spritedatastart
                 dw thrustr0-spritedatastart
                 
-spr_thrustl:    db 1,$06,2,6
+spr_thrustl:    db 16,$06,2,6
+                dw thrustl0-spritedatastart
+                dw thrustl1-spritedatastart
+                dw thrustl0-spritedatastart
+                dw thrustl1-spritedatastart
+                dw thrustl1-spritedatastart
+                dw thrustl2-spritedatastart
+                dw thrustl1-spritedatastart
+                dw thrustl2-spritedatastart
+                dw thrustl2-spritedatastart
+                dw thrustl3-spritedatastart
+                dw thrustl2-spritedatastart
+                dw thrustl3-spritedatastart
+                dw thrustl3-spritedatastart
+                dw thrustl0-spritedatastart
+                dw thrustl3-spritedatastart
                 dw thrustl0-spritedatastart
                 
                 db 0
@@ -583,18 +613,60 @@ shipl2:
                 dg --------#####-----------
 idlel0:       
                 dg ----------------
-                dg --------##------
-                dg --------##------
-                dg --------##------
-                dg --------##------
-                dg --------##------
-thrustl0:
+                dg -#--------------
+                dg #---------------
+                dg #---------------
+                dg -#--------------
+                dg -#--------------
+idlel1:                            
                 dg ----------------
-                dg --------##------
-                dg --------######--
-                dg --------########
-                dg --------######--
-                dg --------##------
+                dg #---------------
+                dg ##--------------
+                dg -#--------------
+                dg #---------------
+                dg -#--------------
+idlel2:                            
+                dg ----------------
+                dg -#--------------
+                dg ----------------
+                dg ##--------------
+                dg -#--------------
+                dg #---------------
+idlel3:                            
+                dg ----------------
+                dg ----------------
+                dg -#--------------
+                dg ----------------
+                dg ##--------------
+                dg -#--------------
+thrustl0:                          
+                dg ----------------
+                dg -#--------------
+                dg ####-#----------
+                dg #--#-###--------
+                dg ##-#-#----------
+                dg -#--------------
+thrustl1:                          
+                dg ----------------
+                dg ##--------------
+                dg -####-----------
+                dg -##--#-#--------
+                dg -##-#-----------
+                dg #---------------
+thrustl2:                          
+                dg ----------------
+                dg #---------------
+                dg ##-###----------
+                dg #-###--#--------
+                dg --##-#----------
+                dg ##--------------
+thrustl3:                          
+                dg ----------------
+                dg --#-------------
+                dg ##-##-----------
+                dg --#-####--------
+                dg #-#-#-----------
+                dg ----------------
 
 bonus2500:
                 dg ####-###-###------------

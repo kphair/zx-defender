@@ -32,8 +32,10 @@ key_warp:       db %10111111, %00000001, ctrl_warp      ; Enter
 
 
 test_controls   proc
-                ld a,(controls)
+                ld a,(controls) 
                 ld (lastcontrols),a
+                xor a
+                ld (controls),a
 
                 ld hl,key_up    ; key controls table
                 ld b,6          ; number of keys in tables
@@ -43,9 +45,11 @@ test_controls   proc
                 inc hl
                 and (hl)
                 inc hl
+                ld c,(hl)
+                inc hl
                 jr nz,no_key
                 ld a,(controls)
-                or (hl)
+                or c
                 ld (controls),a
         
         no_key  djnz check
