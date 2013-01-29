@@ -23,17 +23,17 @@ place_2bsprite  proc
                 ld sp,hl
                 ex de,hl
 erase:
-                pop de
-
-                ld a,e
-                cpl                     ; invert A to create mask
-                and (hl)
+                xor a
+;                pop de
+;                ld a,e
+;                cpl                     ; invert A to create mask
+;                and (hl)
                 ld (hl),a
                 inc l
 
-                ld a,d
-                cpl
-                and (hl)
+;                ld a,d
+;                cpl
+;                and (hl)
                 ld (hl),a
                 dec l
 

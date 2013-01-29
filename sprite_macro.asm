@@ -206,3 +206,55 @@ pos_yofs:
                 jr c,end_move
                 ld (sprp+spr_dy),bc
 end_move        mend
+
+; ************* Baiter movement code
+
+move_baiter     macro(sprp)
+
+                ; only update direction if on frame 1
+                ld a,(sprp+spr_frm)
+                or a
+                jr nz,end_move
+
+                ld hl,(sprship+spr_x)
+                ld de,(sprp+spr_x)
+                ld bc,$40
+                xor a
+                sbc hl,de
+                jr nc,pos_xofs
+                ld bc,-$40
+                ex de,hl
+                xor a
+                ld h,a
+                ld l,a
+                sbc hl,de               ; make HL positive
+pos_xofs:
+                ld de,$280
+                add hl,de
+                ld a,h
+                cp 5
+                jr c,move_y
+                ld hl,(thrust+1)
+                add hl,bc
+                ld (sprp+spr_dx),hl
+
+move_y:                
+                ld hl,(sprship+spr_y)
+                ld de,(sprp+spr_y)
+                ld bc,$100
+                xor a
+                sbc hl,de
+                jr nc,pos_yofs
+                ld bc,-$100
+                xor a
+                ld h,a
+                ld l,a
+                sbc hl,de               ; make HL positive
+pos_yofs:                
+                ld de,$0a00
+                add hl,de
+                ld a,h
+                cp $14
+                jr c,end_move
+                ld (sprp+spr_dy),bc
+end_move        mend

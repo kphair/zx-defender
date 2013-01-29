@@ -1,17 +1,44 @@
-output_szx "defender.szx", $8100,$8100
+; Comment the following if you want the output to be a code block that can
+; be LOADed across the serial port
+snapshot equ true
+
+;-------------
+;
+; Program code starts at $8000
+
+                org $8000
+
+if def snapshot
+        ; output an SZX snapshot file
+        output_szx "defender.szx", $8200,$8200
+        output_bin "defender.bin", $8200, ends-$8200
+else
+        org .-9
+        ; output an Interface 1 stream header
+        output_bin "defender.code", ., ends-.
+        db 3            ; Type = CODE
+        dw ends-.-8     ; Block length
+        dw .+6          ; Block origin
+        dw $ffff, $ffff ; Variable store and autorun for BASIC programs
+endif
+
+
 export_sym "defender.sym",0
 
-                org $8100
+                org $8200
 
                 di   
-
-                ld hl,$7000
-                ld de,$7001
+                push ix
+                push iy
+                ld (basic_sp+1),sp
+                
+                ld hl,$8000
+                ld de,$8001
                 ld bc,$100
-                ld (hl),$81
+                ld (hl),$82
                 ldir
 
-                ld a,$70
+                ld a,$80
                 ld i,a
 
                 im 2
@@ -20,7 +47,6 @@ export_sym "defender.sym",0
                 call preshift_sprites
                 call unpack_landscape
 		call clear_screen
-                pop iy
 
                 in a,(254)
                 and $1f
@@ -32,7 +58,7 @@ export_sym "defender.sym",0
 main:           halt
                 jp main
 
-                org $8181                
+                org $8282                
 inthandler:
 
                 call showstars
@@ -48,9 +74,9 @@ inthandler:
                 do_2bsprite(spr6)
                 do_2bsprite(spr7)         ; swarmers
                 do_2bsprite(spr8)
-                do_2bsprite(spr9)
-                do_2bsprite(spr10)
-                do_2bsprite(spr11)
+                do_3bsprite(spr9)
+                do_3bsprite(spr10)
+                do_3bsprite(spr11)
                 do_2bsprite(spr12)        ; pod
 
                 ld hl,(sprship+spr_x)
@@ -86,17 +112,25 @@ upd_ship:       ld (iy+spr_frm),a
                 move_lander(spr4)
                 move_bomber(spr5)
                 move_bomber(spr6)
-                move_swarmer(spr7)
-                move_swarmer(spr8)
-                move_swarmer(spr9)
-                move_swarmer(spr10)
-                move_swarmer(spr11)
+                move_lander(spr7)
+                move_lander(spr8)
+                move_baiter(spr9)
+                move_baiter(spr10)
+                move_baiter(spr11)
 
 sprites_done:   
 
+
+; ************* Test for BREAK
+
+                ld a,%01111110
+                in a,(254)
+                and %00000001
+                jp z,quit
+
 ; ************* Test for up key pressed
 
-test_up:        ld a,251
+test_up:        ld a,%11111011
 		in a,(254)
 		and %00000001
 		jr z,up_pressed
@@ -128,7 +162,7 @@ move_up:        ld (sprship+spr_y),hl
 
 ; ************* Test for down key pressed
 
-test_down:      ld a,253
+test_down:      ld a,%11111101
 		in a,(254)
 		and %00000001
 		jr z,down_pressed
@@ -467,6 +501,17 @@ no_fire:
                 ei
                 reti
 
+
+quit:           di
+                ld a,$3f
+                ld i,a
+                im 1
+basic_sp:       ld sp,0
+                pop iy
+                pop iy
+                ei
+                ret
+
                 include "sprite_macro.asm"
                 include "sprite_code.asm"
                 include "landscape.asm"
@@ -489,3 +534,5 @@ shots_table     db 0,0,0,0,0
 lastfire:       db 0                    ; used to keep track of the last state of the fire button
 
 thrustnoise:    db 0
+
+ends:           dw 0

@@ -66,31 +66,31 @@ spr6:           dw 0,0,0
                 dw $5000
                 dw -$e,0
 spr7:           dw 0,0,0
-                dw spr_swarmer
+                dw spr_lander
                 dw $c600
                 db 0,0
                 dw $3000
-                dw 0,0
+                dw $20,0
 spr8:           dw 0,0,0
-                dw spr_swarmer
+                dw spr_lander
                 dw $c000
                 db 0,0
                 dw $3000
-                dw 0,0
+                dw $30,0
 spr9:           dw 0,0,0
-                dw spr_swarmer
+                dw spr_baiter
                 dw $c600
                 db 0,0
                 dw $3700
                 dw 0,0
 spr10:          dw 0,0,0
-                dw spr_swarmer
+                dw spr_baiter
                 dw $c000
                 db 0,0
                 dw $3100
                 dw 0,0
 spr11:          dw 0,0,0
-                dw spr_swarmer
+                dw spr_baiter
                 dw $c200
                 db 0,0
                 dw $2800
@@ -171,9 +171,24 @@ spr_bomber:     db 18,$41,2,8
                 dw bombera4-spritedatastart
                 dw bombera5-spritedatastart
 
-spr_baiter:     db 3,$04,3,4
+spr_baiter:     db 18,$04,3,4
+                dw baiter0-spritedatastart
+                dw baiter0-spritedatastart
+                dw baiter0-spritedatastart
+                dw baiter0-spritedatastart
+                dw baiter0-spritedatastart
                 dw baiter0-spritedatastart
                 dw baiter1-spritedatastart
+                dw baiter1-spritedatastart
+                dw baiter1-spritedatastart
+                dw baiter1-spritedatastart
+                dw baiter1-spritedatastart
+                dw baiter1-spritedatastart
+                dw baiter2-spritedatastart
+                dw baiter2-spritedatastart
+                dw baiter2-spritedatastart
+                dw baiter2-spritedatastart
+                dw baiter2-spritedatastart
                 dw baiter2-spritedatastart
 
 spr_swarmer:    db 6,$02,2,4
