@@ -221,6 +221,14 @@ exhaust_vis:
 
 ; ************* Test for fire button
 
+                ; Structure for shots table
+
+                shot_timer      equ 0
+                shot_scrH       equ 1
+                shot_pulse      equ 2
+                shot_fade       equ 3
+                shot_wipe       equ 4
+
 test_fire:      ld a,127
 		in a,(254)
 		and %00000100
@@ -232,12 +240,12 @@ test_fire:      ld a,127
 		jr nz,animate_shots
                 
                 cp b
-                jr z,animate_shots
+                jr z,animate_shots      ; if there was no button transition just animate any existing shots
 
                 ld a,5
                 out (254),a
 
-                ld hl,shots             ; search for a free slot from 4 available
+                ld hl,shots_table       ; search for a free slot from 4 available
                 ld de,5
                 ld a,(hl)
                 or a
@@ -291,32 +299,30 @@ fire_slot:      push hl                 ; save HL
                 ld l,a                  ; HL = screen position of space in front of ship
                 
                 pop ix                  ; restore location of slot
-                inc (ix)
-                ld (ix+1),h             ; high byte of screen address
-                ld (ix+2),l             ; low byte of pulse location
-                ld (ix+3),l             ; low byte of trail location
-                ld (ix+4),l             ; low byte of wipe location
+                inc (ix+shot_timer)
+                ld (ix+shot_scrH),h     ; high byte of screen address
+                ld (ix+shot_pulse),l    ; low byte of pulse location
+                ld (ix+shot_fade),l     ; low byte of fade location
+                ld (ix+shot_wipe),l     ; low byte of wipe location
 
-animate_shots:
-                ld ix,shots
+animate_shots:  ld ix,shots_table
                 ld b,4
-test_shot:
-                ld a,(ix)
+test_shot:      ld a,(ix)
                 or a
                 jp z,next_shot
-
                 ld e,a
 
-                ld h,(ix+1)
-                ld l,(ix+2)             ; pulse moves one byte every frame
+                ld h,(ix+shot_scrH)
+                ld l,(ix+shot_pulse)    ; pulse moves one byte every frame
 
                 ld a,l
                 and $1f
-                jr z,last_frame         ; if on the last frame, skip the pulse
+                jr z,solid_trail        ; if on the last frame, skip the pulse
+
                 cp 1
                 jr z,clear_shot
 
-                ld (hl),%10111100
+                ld (hl),%01011110
                 ld a,h
                 and $f8
                 rra
@@ -328,11 +334,10 @@ test_shot:
 
                 ld a,e
                 cp 1
-                jr z,first_frame        ; If first frame, skip the first solid trail
+                jr z,shot_cycle         ; If first frame, skip the first solid trail
 
-                ld h,(ix+1)
-                ld l,(ix+2)
-last_frame:
+solid_trail:    ld h,(ix+shot_scrH)     ; reload screen address into HL
+                ld l,(ix+shot_pulse)
                 dec l
                 ld (hl),$ff             ; for every frame other than the first one, draw a solid trail behind the pulse
 
@@ -344,26 +349,21 @@ last_frame:
                 or $50
                 ld h,a
                 ld a,ixl
-                rra
-                rra
-                and 3
-                inc a
+                sub LOW shots_table
+                srl a
+                srl a
+                adc a,2
                 or $40
                 ld (hl),a
-                inc l
-first_frame:
-                inc l
-                ld (ix+2),l
-                ld a,l
-                and $1f                 
 
-;check_trail:                
-                ld a,e
+fade_trail:     ld a,e
+                cp 3                    ; Give the solid trail a couple of frames to be seen
+                jr c,shot_cycle
                 and 3
-                cp 0
-                jr z,do_wipe            ; trail moves three out of every 4 frames
-                ld l,(ix+3)
-                ld h,(ix+1)
+                cp 1
+                jr z,wipe_trail         ; trail moves three out of every 4 frames
+                ld h,(ix+shot_scrH)
+                ld l,(ix+shot_fade)
                 ld d,HIGH firefade
                 ld a,r
                 add a,l
@@ -373,19 +373,37 @@ first_frame:
                 ld a,(de)
                 ld (hl),a
                 inc l
-                ld (ix+3),l
-                jr next_shot
+                ld (ix+shot_fade),l
 
-do_wipe:
-                ld l,(ix+4)             ; wipe moves one byte every 4 frames
-                ld h,(ix+1)
+                ld a,h
+                and $f8
+                rra
+                rra
+                rra
+                or $50
+                ld h,a
+                ld a,ixl
+                sub LOW shots_table
+                srl a
+                srl a
+                adc a,1
+;                or $40
+                ld (hl),a
+
+                jr shot_cycle
+
+wipe_trail:     ld a,e
+                cp 4                    ; don't start wiping the trail until the fade has had a chance to show up
+                jr c,shot_cycle
+                ld h,(ix+shot_scrH)     ; wipe moves one byte every 4 frames
+                ld l,(ix+shot_wipe)
                 ld (hl),0
                 inc l
                 ld (ix+4),l                
-                jr next_shot
+                jr shot_cycle
 
-clear_shot:     ld l,(ix+4)             ; continue wipe to the edge of screen
-                ld h,(ix+1)
+clear_shot:     ld h,(ix+shot_scrH)     ; continue wipe to the edge of screen
+                ld l,(ix+shot_wipe)
                 ld c,0
                 ld (ix),c               ; deactivate this shot
 wipe_shot:      ld (hl),c
@@ -393,10 +411,12 @@ wipe_shot:      ld (hl),c
                 ld a,l
                 and $1f
                 jr nz,wipe_shot
-                
-next_shot:      
-                inc (ix)               ; main counter
-                ld de,5
+                jr next_shot                
+
+shot_cycle:     inc (ix+shot_timer)     ; main counter
+                inc (ix+shot_pulse)     ; leave this until last otherwise it messes up the solid trail position
+
+next_shot:      ld de,5
                 add ix,de
                 dec b
                 jp nz,test_shot
@@ -430,17 +450,16 @@ no_fire:
                 include "screen.asm"
                 include "sprite_data.asm"
 
+                align 16
+firefade:       db %00010001, %11010111, %00001001, %01000101, %10101000, %00011001, %01100001, %01100101
+
 rand0:          dw 13*73-1
 rand1:          dw 23*97-1
 
-thrustnoise:    db 0
-
-shots:          db 0,0,0,0,0
+shots_table     db 0,0,0,0,0
                 db 0,0,0,0,0
                 db 0,0,0,0,0
                 db 0,0,0,0,0
 lastfire:       db 0                    ; used to keep track of the last state of the fire button
 
-                align 16
-firefade:       db %00010001, %11010111, %00001001, %01000101, %10101000, %00011001, %01100001, %01100101
-
+thrustnoise:    db 0
