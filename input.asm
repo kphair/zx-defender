@@ -151,7 +151,7 @@ test_thrust     proc
 
                 ld a,(controls)
 		and ctrl_thrust
-		jr z,no_thrust               ; If no thrust then turn the exhaust down
+		jr z,no_thrust               ; If no thrust then just set the exhaust to idle
 
                 ld a,(rand0)
                 inc a
@@ -267,11 +267,12 @@ ship_friction   proc
                 cpl
                 ld h,a
                 inc hl                  ; HL = -(middle and high byte)
-                xor a
-                bit 7,h
-                jr z,thrust_pos
-                cpl
-thrust_pos:
+
+                ld a,h                  ; A = +1 or -1 depending on sign of H
+                rla                     ; move bit 7 into carry
+                sbc a,a                 ; extend carry into all of A
+                or 1                    ; and OR 1 to make A=$FF or $01
+                
                 ld b,a
                 ld a,h
                 add hl,hl
@@ -286,3 +287,4 @@ thrust_pos:
         
                 retp
 
+                

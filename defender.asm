@@ -22,8 +22,8 @@ else
         dw $ffff, $ffff ; Variable store and autorun for BASIC programs
 endif
 
-
 export_sym "defender.sym",0
+
 
                 org $8200
 
@@ -32,18 +32,18 @@ export_sym "defender.sym",0
                 push iy
                 ld (basic_sp+1),sp
                 
+                ; create the interrupt vector table
                 ld hl,$8000
                 ld de,$8001
                 ld bc,$100
                 ld (hl),$82
                 ldir
 
+                ; set interrupt mode 2 with vector register pointing to new vector table
                 ld a,$80
                 ld i,a
-
                 im 2
         
-                push iy
                 call preshift_sprites
                 call unpack_landscape
 		call clear_screen

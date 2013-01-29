@@ -44,7 +44,7 @@ chk_pan_left:   ld bc,200*32            ; subtract the desired ship offset (200*
                 sbc hl,de
                 sbc hl,bc
                 jp p,no_pan_left
-                ld de,-3*32
+                ld de,-2*32
                 jr do_pan
 
 ; if the ship is 200 pixels or more to the right of the camera position then 
@@ -72,7 +72,7 @@ chk_pan_right:  ld bc,40*32             ; subtract the desired ship offset from 
                 sbc hl,de
                 jp m,no_pan_right       ; don't pan if result negative
                 jr z,no_pan_right       ; or zero
-                ld de,3*32
+                ld de,2*32
                 jr do_pan
 
 no_pan_right:   ld hl,(thrust+1)        ; calculate thrust * 8
