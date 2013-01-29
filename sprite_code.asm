@@ -25,17 +25,16 @@ place_2bsprite  proc
 
                 ld c,$07
 erase:
-                xor a
-;                pop de
-;                ld a,e
-;                cpl                     ; invert A to create mask
-;                and (hl)
+                pop de
+                ld a,e
+                cpl                     ; invert A to create mask
+                and (hl)
                 ld (hl),a
                 inc l
 
-;                ld a,d
-;                cpl
-;                and (hl)
+                ld a,d
+                cpl
+                and (hl)
                 ld (hl),a
                 dec l
 
@@ -64,7 +63,7 @@ no_erase:
                 pop ix                  ; retrieve address of sprite descriptor table
                 pop hl                  ; retrieve X position
 
-                ld de,(landscape_ofs)
+                ld de,(camera_x)
                 xor a
                 sbc hl,de               ; calculate offset of sprite relative to screen
 
@@ -311,7 +310,7 @@ no_erase:
                 pop ix                  ; retrieve address of sprite descriptor table
                 pop hl                  ; retrieve X position
 
-                ld de,(landscape_ofs)
+                ld de,(camera_x)
                 xor a
                 sbc hl,de               ; calculate offset of sprite relative to screen
 

@@ -62,7 +62,7 @@ store           ld (hl),c
                 retp
 
 
-; Erase the landscape using landscape_lofs/32 as the offset into the landscape data
+; Erase the landscape using camera_lastx/32 as the offset into the landscape data
 
 erase_landscape proc
 
@@ -71,7 +71,7 @@ erase_landscape proc
 
                 ld (restore_sp+1),sp
 
-		ld hl,(landscape_lofs)
+		ld hl,(camera_lastx)
                 srl h
                 rr l
                 srl h
@@ -150,7 +150,7 @@ restore_sp      ld sp,0
                 retp
 
 
-; Draw the landscape using landscape_ofs as the offset into the landscape date
+; Draw the landscape using camera_x as the offset into the landscape date
 
 land_colour:    dw $0303
 
@@ -161,8 +161,8 @@ draw_landscape  proc
 
                 ld (restore_sp+1),sp
 
-		ld hl,(landscape_ofs)
-		ld (landscape_lofs),hl
+		ld hl,(camera_x)
+		ld (camera_lastx),hl
                 srl h
                 rr l
                 srl h
@@ -281,7 +281,7 @@ restore_sp      ld sp,0
 
 ; ************* Update twinkling starfield (x positions are a quarter of screen offset)
                 
-showstars       proc
+show_stars      proc
 
                 ld a,3
                 out (254),a
@@ -307,7 +307,7 @@ erase_star:
                 pop hl                  ; retrieve star X
                 ld b,h
                 ld c,l                  ; save copy in BC
-                ld de,(landscape_ofs)
+                ld de,(camera_x)
                 sbc hl,de               ; subtract current landscape offset
 
                 pop de                  ; retrieve timer and y position
@@ -423,8 +423,8 @@ restoresp:      ld sp,0
 
 align 2
 
-landscape_ofs:	dw 0		; Current offset
-landscape_lofs:	dw 0		; Last offset (for erase run or last frame differencing)
+camera_x:	dw 0		; Current offset
+camera_lastx:	dw 0		; Last offset (for erase run or last frame differencing)
 
 thrust:         db 0,0,0
 

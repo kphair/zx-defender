@@ -23,13 +23,15 @@ controls:       db 0
 lastcontrols:   db 0
 
 ; Each key defined by 3 bytes: Keyboard segment mask, key mask within that segment and control bit to set
-key_up:         db %11111011, %00000001, ctrl_up        ; Q
-key_down:       db %11111101, %00000001, ctrl_down      ; A
-key_thrust:     db %01111111, %00001000, ctrl_thrust    ; N
-key_fire:       db %01111111, %00000100, ctrl_fire      ; M
-key_reverse:    db %11111110, %00000010, ctrl_reverse   ; Z
-key_warp:       db %10111111, %00000001, ctrl_warp      ; Enter
-
+key_defs:
+                db %11111011, %00000001, ctrl_up        ; Q
+                db %11111101, %00000001, ctrl_down      ; A
+                db %01111111, %00001000, ctrl_thrust    ; N
+                db %01111111, %00000100, ctrl_fire      ; M
+                db %11111110, %00000010, ctrl_reverse   ; Z
+                db %01111111, %00000001, ctrl_reverse   ; Space
+                db %10111111, %00000001, ctrl_warp      ; Enter
+                db 0
 
 test_controls   proc
                 ld a,(controls) 
@@ -37,22 +39,22 @@ test_controls   proc
                 xor a
                 ld (controls),a
 
-                ld hl,key_up    ; key controls table
-                ld b,6          ; number of keys in tables
+                ld hl,key_defs  ; table keys defined for controls
 
         check   ld a,(hl)
+                or a
+                jr z,endtest
                 in a,(254)
                 inc hl
+                cpl
                 and (hl)
                 inc hl
                 ld c,(hl)
                 inc hl
-                jr nz,no_key
+                jr z,check
                 ld a,(controls)
                 or c
                 ld (controls),a
-        
-        no_key  djnz check
-
-                retp
+                jr check
+        endtest retp
 
