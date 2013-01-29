@@ -329,6 +329,10 @@ starfield_data: dw 0,0,0,0
                 dw $ffff,$ffff,$ffff,$ffff
 
 showstars       proc
+
+                ld a,3
+                out (254),a
+
                 ld (restoresp+1),sp
                 ld sp,starfield_data
 do_star:
@@ -462,7 +466,9 @@ align_pixel:    rrca                    ; rotate byte right B times
                 srl a
                 srl a
                 srl a                   ; divide by 16 to create colour
-;                and 7
+                jr nz,stillvisible      ; check to make sure colour isn't black
+                inc a                   
+stillvisible:
                 ld (hl),a
 
                 ld hl,8
@@ -470,9 +476,10 @@ align_pixel:    rrca                    ; rotate byte right B times
                 ld sp,hl
 
                 jp do_star
-
 end_stars:
 restoresp:      ld sp,0
                                 
-
+                xor a
+                out (254),a
+                      
                 retp

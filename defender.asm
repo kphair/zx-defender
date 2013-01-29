@@ -34,13 +34,10 @@ main:           halt
 
                 org $8181                
 inthandler:
-                ; di
-
-                push iy
 
                 call erase_landscape
-
                 call draw_landscape
+                call showstars
 
                 do_2bsprite(spr0)         ; landers
                 do_2bsprite(spr1)
@@ -425,15 +422,6 @@ no_fire:
                 add hl,de
 		ld (sprship+spr_x),hl
                 
-                ld a,3
-                out (254),a
-                call showstars
-                xor a
-                out (254),a
-
-
-                pop iy
-
                 ei
                 reti
 
