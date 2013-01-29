@@ -85,9 +85,9 @@ inthandler:
                 ; ship_offset is the desired pixel offset from the edge of the screen
                 ; 
 
-                ld a,(ship_dir)
-                bit 7,a
-                jr nz,ship_left
+                ld a,(ship_dir+1)
+                cp HIGH (128*32)
+                jr nc,ship_left
 
                 ; Ship is facing right
 
@@ -145,18 +145,37 @@ ship_right:
 sprites_done:   
 
 
+                call test_controls
+
 ; ************* Test for BREAK
 
-                ld a,%01111110
+                ld a,%11111110
                 in a,(254)
-                and %00000001
+                and %00000001           ; CAPS
+                jp nz,test_reverse
+                ld a,%01111111
+                in a,(254)
+                and %00000001           ; Space
                 jp z,quit
+
+; ************* Test for reverse
+
+test_reverse:   ld a,%11111110
+                in a,(254)
+                and %00000010           ; Z
+                jr nz,test_up
+                ld a,(ship_dir+1)
+                cp HIGH (128*32)        ; carry if facing right
+                ld de,40*32             ; face right
+                jr nc,do_reverse
+                ld de,216*32            ; face left
+do_reverse:     ld (ship_dir),de
 
 ; ************* Test for up key pressed
 
 test_up:        ld a,%11111011
-		in a,(254)
-		and %00000001
+		in a,(254)          
+                and %00000001           ; Q
 		jr z,up_pressed
                 ld a,(sprship+spr_dy+1) 
                 rla                     ; test if dy is negative (ship moving up from last keypress)
@@ -170,10 +189,10 @@ up_pressed      ld hl,(sprship+spr_y)
                 ld a,d
                 cp -2
                 jr z,max_up_vel
-                ld de,-$100              ; if DE is 0 then initialise it to $100
+                ld de,-$100             ; if DE is 0 then initialise it to $100
 max_up_vel:     add hl,de
 
-		ld a,h                ; Is HL < $2000 (top of play area)
+                ld a,h                  ; Is HL < $2000 (top of play area)
                 cp $20
                 jr nc,move_up
                 ld hl,$2000
@@ -188,11 +207,11 @@ move_up:        ld (sprship+spr_y),hl
 
 test_down:      ld a,%11111101
 		in a,(254)
-		and %00000001
+                and %00000001           ; Z
 		jr z,down_pressed
 
                 ld a,(sprship+spr_dy+1) 
-                or a                     ; test if dy is positive and non-zero (ship moving down)
+                or a                    ; test if dy is positive and non-zero (ship moving down)
                 jr nc,test_thrust
                 ld hl,0                 ; reset dy to 0
                 ld (sprship+spr_dy),hl
@@ -206,7 +225,7 @@ down_pressed    ld hl,(sprship+spr_y)
                 ld de,$100              ; if DE is 0 then initialise it to $100
 max_down_vel:   add hl,de
 
-		ld a,h                ; Is HL < $2000 (top of play area)
+                ld a,h                  ; Is HL < $2000 (top of play area)
                 cp $b4
                 jr c,move_down
                 ld hl,$b400
@@ -531,19 +550,34 @@ no_fire:
 
                 ld de,(sprship+spr_x)   ; subtract ship_x
                 sbc hl,de
-                
-                ld de,(ship_dir)
-                xor a
+                ld de,(ship_dir)       ; then subtract the ship offset from screen edge
                 sbc hl,de
-                ld de,64
-                jr nc,pan_right         ; ship is more right than it should be so pan right
-                ld de,-64                
-                jr nz,pan_right         ; if spot-on don't make any adjustments
-                ld de,0                
-pan_right:      ld hl,(landscape_ofs)
+                
+                ld de,0
+                ld a,(ship_dir+1)
+                cp HIGH (128*32)        ; if carry then ship is facing right, so see if we need to pan right
+                jr c,check_pan_right
+
+                ; ship is facing left, do we need to pan left to bring to the right side of screen
+check_pan_left: 
+                bit 7,h                 
+                jr z,do_pan
+                ld de,-(2*32)
+                jr do_pan
+
+                ; ship is facing right, do we need to pan right to bring it to the left side of screen
+check_pan_right:                        
+                ld a,h
+                or l
+                jr z,do_pan
+                ld de,2*32
+                
+do_pan:
+                ld hl,(landscape_ofs)
                 add hl,de
                 ld (landscape_ofs),hl
-                
+
+no_pan:                
 
 ;                ex de,hl
 ;                add hl,hl
@@ -571,6 +605,7 @@ basic_sp:       ld sp,0
 
                 include "sprite_macro.asm"
                 include "sprite_code.asm"
+                include "input.asm"
                 include "landscape.asm"
                 include "charset.asm"
                 include "screen.asm"
@@ -579,7 +614,7 @@ basic_sp:       ld sp,0
                 include "sprite_data.asm"
 
                 align 16
-firefade:       db %00010001, %11010111, %00001001, %01000101, %10101000, %00011001, %01100001, %01100101
+firefade:       dg ---#---###-#-###----#--#-#---#-##-#-#------##--#-##----#-##--#-#
 
 rand0:          dw 13*73-1
 rand1:          dw 23*97-1
@@ -588,9 +623,10 @@ shots_table     db 0,0,0,0,0
                 db 0,0,0,0,0
                 db 0,0,0,0,0
                 db 0,0,0,0,0
-lastfire:       db 0                    ; used to keep track of the last state of the fire button
+lastfire:       db 0            ; used to keep track of the last state of the fire button
 
 thrustnoise:    db 0
-ship_dir:       dw 40*32
+
+ship_dir:       db $00          ; right = $00, left = $ff
 
 ends:           dw 0
