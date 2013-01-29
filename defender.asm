@@ -177,17 +177,23 @@ test_thrust:    ld a,127
                 ld (sprexhaust+spr_dsc),hl
 
                 ld hl,(thrust+1)
-                ld a,l
-                cp $c0
-                jr nc,end_thrust
-
                 ld a,h
-                add hl,hl
-                add hl,hl
-                inc h
+                cp $1
+                jr nz,more_thrust
+                ld l,0
+                ld (thrust+1),hl
+                jr end_thrust
+more_thrust:
+
+                inc l
+                inc l
+                inc l
+                
                 ld de,(thrust)
                 add hl,de
+                ld a,h
                 adc a,0
+                      
                 ld (thrust),hl
                 ld (thrust+2),a
 
