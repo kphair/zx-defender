@@ -1,3 +1,20 @@
+ATTR_INKBLU     equ $01
+ATTR_INKRED     equ $02
+ATTR_INKMAG     equ $03
+ATTR_INKGRN     equ $04
+ATTR_INKCYN     equ $05
+ATTR_INKYEL     equ $06
+ATTR_INKWHT     equ $07
+ATTR_PAPERBLU   equ $08
+ATTR_PAPERRED   equ $10
+ATTR_PAPERMAG   equ $18
+ATTR_PAPERGRN   equ $20
+ATTR_PAPERCYN   equ $28
+ATTR_PAPERYEL   equ $30
+ATTR_PAPERWHT   equ $38
+ATTR_BRIGHT     equ $40
+ATTR_FLASH      equ $80
+
 clear_screen	proc
 
                 ld hl, $5800

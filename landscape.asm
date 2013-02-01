@@ -317,35 +317,18 @@ erase_star:
 
 init_star:
                 exx
-                ld hl,(rand0)
-                ld de,(rand1)
-                ld  a,e         ; w = w ^ ( w << 3 )
-                add a,a
-                add a,a
-                add a,a
-                xor e
-                ld  e,a
-                ld  a,h         ; t = x ^ (x << 1)
-                add a,a
-                xor h
-                ld  d,a
-                rra             ; t = t ^ (t >> 1) ^ w
-                xor d
-                xor e
-                ld  h,l         ; y = z
-                ld  l,a         ; w = t
-                ld (rand0),de
-                ld (rand1),hl
+                call prng
                 exx
 
-                ld bc,(rand0)           ; get new star position
-                ld a,b
+                ld bc,(rand0)
+                xor b
+                
                 and $3f
                 rla
                 or $40                  ; generate a semi-random timer value between $40 and $7f
                 ld e,a
                 
-                ld a,(rand1)
+                ld a,c
                 ld l,a
                 and $7f
                 add a,$20                 ; generate a semi-random y value between $20 and $9f

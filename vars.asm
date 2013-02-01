@@ -1,7 +1,7 @@
 controls:       db 0          
 lastcontrols:   db 0
 rand0:          dw 13*73-1
-rand1:          dw 23*97-1
+prnd:           db 0
 thrustnoise:    db 0
 ship_dir:       db $00          ; right = $00, left = $ff
 
@@ -21,3 +21,4 @@ key_defs:
                 db %10111111, %00000001, ctrl_warp      ; Enter
                 db 0
 
+baiter_fury:    db $c0

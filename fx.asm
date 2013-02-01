@@ -38,6 +38,11 @@ fire_slot:
                 push hl                 ; save HL
                 ld hl,(sprship+spr_x)
                 ld de,20*32             
+                ld a,(ship_dir)
+                or a
+                jr z,fire_slot_r
+                ld de,-4*32
+fire_slot_r:
                 add hl,de               ; add width of sprite plus a few pixels
                 ld de,(camera_x)
                 sbc hl,de               ; calculate offset of sprite relative to screen
@@ -72,7 +77,13 @@ fire_slot:
                 ld l,a                  ; HL = screen position of space in front of ship
                 
                 pop ix                  ; restore location of slot
-                inc (ix+shot_timer)
+                ld a,(ship_dir)
+                or a
+                jr z,set_timer_r
+                dec (ix+shot_timer)     ; negative timer if ship faces left
+                jr set_timer
+set_timer_r:    inc (ix+shot_timer)
+set_timer:
                 ld (ix+shot_scrH),h     ; high byte of screen address
                 ld (ix+shot_pulse),l    ; low byte of pulse location
                 ld (ix+shot_fade),l     ; low byte of fade location
@@ -80,20 +91,28 @@ fire_slot:
 
 animate_shots:  ld ix,shots_table
                 ld b,4
-test_shot:      ld a,(ix)
+                ld a,5
+                out (254),a
+test_shot:      ld a,(ix+shot_timer)
                 or a
                 jp z,next_shot
-                ld e,a
+
+                jp m,shot_left
+
+; This section is for a shot that is traveling right
+; -  -  -- - --- ----->
+;
+                ld e,a                  ; save copy of timer in E
 
                 ld h,(ix+shot_scrH)
                 ld l,(ix+shot_pulse)    ; pulse moves one byte every frame
 
                 ld a,l
                 and $1f
-                jr z,solid_trail        ; if on the last frame, skip the pulse
+                jr z,solid_trail_r        ; if on the last frame, skip the pulse
 
                 cp 1
-                jr z,clear_shot
+                jr z,clear_shot_r
 
                 ld (hl),%01011110
                 ld a,h
@@ -103,13 +122,13 @@ test_shot:      ld a,(ix)
                 rra
                 or $50
                 ld h,a
-                ld (hl),$47
+                ld (hl),ATTR_INKWHT + ATTR_BRIGHT
 
                 ld a,e
                 cp 1
-                jr z,shot_cycle         ; If first frame, skip the first solid trail
+                jr z,shot_cycle_r       ; If first frame, skip the first solid trail
 
-solid_trail:    ld h,(ix+shot_scrH)     ; reload screen address into HL
+solid_trail_r:  ld h,(ix+shot_scrH)     ; reload screen address into HL
                 ld l,(ix+shot_pulse)
                 dec l
                 ld (hl),$ff             ; for every frame other than the first one, draw a solid trail behind the pulse
@@ -126,15 +145,15 @@ solid_trail:    ld h,(ix+shot_scrH)     ; reload screen address into HL
                 srl a
                 srl a
                 adc a,2
-                or $40
+                or ATTR_BRIGHT
                 ld (hl),a
 
-fade_trail:     ld a,e
+fade_trail_r:   ld a,e
                 cp 3                    ; Give the solid trail a couple of frames to be seen
-                jr c,shot_cycle
+                jr c,shot_cycle_r
                 and 3
                 cp 1
-                jr z,wipe_trail         ; trail moves three out of every 4 frames
+                jr z,wipe_trail_r         ; trail moves three out of every 4 frames
                 ld h,(ix+shot_scrH)
                 ld l,(ix+shot_fade)
                 ld d,HIGH firefade
@@ -160,35 +179,153 @@ fade_trail:     ld a,e
                 srl a
                 srl a
                 adc a,1
-;                or $40
+;                or ATTR_BRIGHT
                 ld (hl),a
 
-                jr shot_cycle
+                jr shot_cycle_r
 
-wipe_trail:     ld a,e
+wipe_trail_r:   ld a,e
                 cp 4                    ; don't start wiping the trail until the fade has had a chance to show up
-                jr c,shot_cycle
+                jr c,shot_cycle_r
                 ld h,(ix+shot_scrH)     ; wipe moves one byte every 4 frames
                 ld l,(ix+shot_wipe)
                 ld (hl),0
                 inc l
                 ld (ix+4),l                
-                jr shot_cycle
+                jr shot_cycle_r
 
-clear_shot:     ld h,(ix+shot_scrH)     ; continue wipe to the edge of screen
+clear_shot_r:   ld h,(ix+shot_scrH)     ; continue wipe to the edge of screen
                 ld l,(ix+shot_wipe)
                 ld c,0
                 ld (ix),c               ; deactivate this shot
-wipe_shot:      ld (hl),c
+wipe_shot_r:    ld (hl),c
                 inc l
                 ld a,l
                 and $1f
-                jr nz,wipe_shot
+                jr nz,wipe_shot_r
+
+                jp next_shot                
+
+shot_cycle_r:   inc (ix+shot_timer)     ; main counter
+                inc (ix+shot_pulse)     ; leave this until last otherwise it messes up the solid trail position
+                jp next_shot
+
+
+; This section is for a shot traveling left
+; <----- --- - --  -  -
+;
+shot_left:
+                neg
+                ld e,a                  ; save copy of abs(timer) in E
+                
+                ld h,(ix+shot_scrH)
+                ld l,(ix+shot_pulse)    ; pulse moves one byte every frame
+
+                ld a,l
+                and $1f
+                cp $1f
+                jr z,solid_trail_l        ; if on the last frame, skip the pulse
+
+                cp $1e
+                jr z,clear_shot_l
+
+                ld (hl),%01111010
+                ld a,h
+                and $f8
+                rra
+                rra
+                rra
+                or $50
+                ld h,a
+                ld (hl),ATTR_INKWHT + ATTR_BRIGHT
+
+                ld a,e
+                cp 1
+                jr z,shot_cycle_l       ; If first frame, skip the first solid trail
+
+solid_trail_l:  ld h,(ix+shot_scrH)     ; reload screen address into HL
+                ld l,(ix+shot_pulse)
+                inc l                   ; step right to draw the trail behind the pulse
+                ld (hl),$ff             ; for every frame other than the first one, draw a solid trail behind the pulse
+
+                ld a,h
+                and $f8
+                rra
+                rra
+                rra
+                or $50
+                ld h,a
+                ld a,ixl
+                sub LOW shots_table
+                srl a
+                srl a
+                adc a,2
+                or ATTR_BRIGHT
+                ld (hl),a
+
+fade_trail_l:   ld a,e
+                cp 3                    ; Give the solid trail a couple of frames to be seen
+                jr c,shot_cycle_l
+                and 3
+                cp 1
+                jr z,wipe_trail_l       ; trail moves three out of every 4 frames
+                ld h,(ix+shot_scrH)
+                ld l,(ix+shot_fade)
+                ld d,HIGH firefade
+                ld a,r
+                add a,l
+                and 7
+                add a,LOW firefade
+                ld e,a
+                ld a,(de)
+                ld (hl),a
+                dec l
+                ld (ix+shot_fade),l
+
+                ld a,h
+                and $f8
+                rra
+                rra
+                rra
+                or $50
+                ld h,a
+                ld a,ixl
+                sub LOW shots_table
+                srl a
+                srl a
+                adc a,1
+                ld (hl),a               ; colour the trail
+
+                jr shot_cycle_l
+
+wipe_trail_l:   ld a,e
+                cp 4                    ; don't start wiping the trail until the fade has had a chance to show up
+                jr c,shot_cycle_l
+                ld h,(ix+shot_scrH)     ; wipe moves one byte every 4 frames
+                ld l,(ix+shot_wipe)
+                ld (hl),0
+                dec l
+                ld (ix+shot_wipe),l                
+                jr shot_cycle_l
+
+clear_shot_l:   ld h,(ix+shot_scrH)     ; continue wipe to the edge of screen
+                ld l,(ix+shot_wipe)
+                ld c,0
+                ld (ix),c               ; deactivate this shot
+wipe_shot_l:    ld (hl),c
+                dec l
+                ld a,l
+                and $1f
+                cp $1f
+                jr nz,wipe_shot_l
 
                 jr next_shot                
 
-shot_cycle:     inc (ix+shot_timer)     ; main counter
-                inc (ix+shot_pulse)     ; leave this until last otherwise it messes up the solid trail position
+shot_cycle_l:   dec (ix+shot_timer)     ; main counter
+                dec (ix+shot_pulse)     ; leave this until last otherwise it messes up the solid trail position
+                jr next_shot
+
+; Carry on to next item in table
 
 next_shot:      ld de,5
                 add ix,de

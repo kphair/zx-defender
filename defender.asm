@@ -176,6 +176,31 @@ basic_sp:       ld sp,0
                 ei
                 ret
 
+prng            proc
+
+                ld hl,(rand0)
+
+                ld a,(prnd)
+                ld b,a
+                add a,b
+                add a,b
+                add a,$11
+                ld b,a
+                sra a
+                sra a
+                sra a
+                xor h
+                sra a
+                rr h
+                rr l
+                ld (rand0),hl
+                ld a,b
+                add a,h
+                adc a,l
+                ld (prnd),a
+        
+                retp
+
                 include "sprite_macro.asm"
                 include "sprite_code.asm"
                 include "input.asm"

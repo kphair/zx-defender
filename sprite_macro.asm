@@ -130,19 +130,8 @@ move_bomber     macro(sprp)
                 or a
                 jr nz, end_move
 
-                ld hl,(rand0)
-                ld de,(rand1)
-                ld a,r
-                xor d
-                rrc l
-                rlc e
-                rlc e
-                rlc e
-                xor h
-                ld h,a
-                add hl,de
-                ld (rand0),de
-                ld (rand1),hl
+                call prng
+
                 ld hl,(sprp+spr_y)
                 ld de,$70
                 rra
@@ -213,49 +202,61 @@ end_move        mend
 move_baiter     macro(sprp)
 
                 ; only update direction if on frame 1
-                ld a,(sprp+spr_frm)
-                or a
-                jr nz,end_move
+                ld a,(baiter_fury)
+                ld b,a
+                call prng
+                cp b
+                jr nc,end_move
 
-                ld hl,(sprship+spr_x)
-                ld de,(sprp+spr_x)
-                ld bc,$40
+                ld hl,(sprship+spr_x)   ; get baiter.x into HL
+                ld de,(sprp+spr_x)      ; get ship.x into DE
+                ld bc,$40               ; BC = $40
                 xor a
-                sbc hl,de
-                jr nc,pos_xofs
+                sbc hl,de               ; baiter.x - ship.x
+                jr nc,pos_xofs          ; if baiter.x < ship.x then BC = -$40
+
                 ld bc,-$40
-                ex de,hl
-                xor a
+                ld a,h                  ; HL = -HL
+                cpl
                 ld h,a
+                ld a,l
+                cpl
                 ld l,a
-                sbc hl,de               ; make HL positive
-pos_xofs:
-                ld de,$280
+                inc hl                  
+
+pos_xofs:       ld de,$280              ; add $280 to the difference between baiter.x and ship.x
                 add hl,de
                 ld a,h
-                cp 5
-                jr c,move_y
-                ld hl,(thrust+1)
+                cp 5                    
+                jr c,move_y             ; if less than $500 skip ahead to process Y direction
+                ld hl,(thrust+1)        ; add current thrust value so baiter can chase ship
                 add hl,bc
                 ld (sprp+spr_dx),hl
 
-move_y:                
-                ld hl,(sprship+spr_y)
-                ld de,(sprp+spr_y)
+move_y:         ld hl,(sprship+spr_y)   ; get ship.y into HL
+                ld de,(sprp+spr_y)      ; get baiter.y into DE
                 ld bc,$100
                 xor a
-                sbc hl,de
-                jr nc,pos_yofs
+                sbc hl,de               ; ship.y - baiter.y
+                jr nc,pos_yofs          ; if ship.y > baiter.y then BC = -$100
+                
                 ld bc,-$100
-                xor a
+                ld a,h                  ; HL = -HL
+                cpl
                 ld h,a
+                ld a,l
+                cpl
                 ld l,a
-                sbc hl,de               ; make HL positive
-pos_yofs:                
-                ld de,$0a00
+                inc hl                  
+
+pos_yofs:       ld de,$0a00
                 add hl,de
                 ld a,h
                 cp $14
                 jr c,end_move
-                ld (sprp+spr_dy),bc
+                ld hl,(sprship+spr_dy)
+                add hl,bc
+                sra h
+                rr l
+                ld (sprp+spr_dy),hl
 end_move        mend
