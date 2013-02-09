@@ -27,11 +27,11 @@ export_sym "defender.sym",0
 
                 org $8200
 
-                di   
+                di
                 push ix
                 push iy
                 ld (basic_sp+1),sp
-                
+
                 ; create the interrupt vector table
                 ld hl,$8000
                 ld de,$8001
@@ -43,16 +43,15 @@ export_sym "defender.sym",0
                 ld a,$80
                 ld i,a
                 im 2
-        
+
                 call preshift_sprites
                 call unpack_landscape
 		call clear_screen
 
                 in a,(254)
+                cpl
                 and $1f
-                xor $1f
                 jr nz, main
-                jr main
 
                 ei
 
@@ -84,7 +83,7 @@ inthandler:
                 ; Display the ship exhaust and main sprite
                 ; ship_offset is positive is ship is facing right, negative if left
                 ; ship_offset is the desired pixel offset from the edge of the screen
-                ; 
+                ;
 
                 ld a,(ship_dir)
                 or a
@@ -103,7 +102,7 @@ ship_left:      ld hl,spr_shipl         ; set ship sprite facing left
 
 ship_right:
                 ; set exhaust x position
-                ld hl,(sprship+spr_x) 
+                ld hl,(sprship+spr_x)
                 add hl,de
                 ld (sprexhaust+spr_x),hl
                 ; set exhaust y position
@@ -143,17 +142,17 @@ ship_right:
                 move_baiter(spr10)
                 move_baiter(spr11)
 
-sprites_done:   
+sprites_done:
 
                 call read_keyboard
 
                 call test_break
 
                 call test_reverse
-                
+
                 call test_up
                 call test_down
-	
+
                 call test_thrust
                 call ship_friction
 
@@ -199,7 +198,7 @@ prng            proc
                 add a,h
                 adc a,l
                 ld (prnd),a
-        
+
                 retp
 
                 include "sprite_macro.asm"

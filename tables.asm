@@ -1,8 +1,8 @@
 
-shots_table     db 0,0,0,0,0
-                db 0,0,0,0,0
-                db 0,0,0,0,0
-                db 0,0,0,0,0
+shots_table     db 0,0,0,0,0,0
+                db 0,0,0,0,0,0
+                db 0,0,0,0,0,0
+                db 0,0,0,0,0,0
 
 
 ; Preshift bank offsets
@@ -17,7 +17,7 @@ preshift5:      dw spritedatastart + banksize * 5
 preshift6:      dw spritedatastart + banksize * 6
 preshift7:      dw spritedatastart + banksize * 7
 
-align 16
+align 8
 firefade:       dg ---#---###-#-###----#--#-#---#-##-#-#------##--#-##----#-##--#-#
 
 align 512
@@ -101,7 +101,7 @@ noise:          db $1B,$9B,$3F,$08,$7F,$51,$55,$9F,$E8,$10,$CB,$89,$4A,$08,$4A,$
                 db $D7,$CF,$76,$F7,$3A,$CC,$AC,$2A,$8C,$8C,$17,$9D,$30,$B5,$BB,$2F
                 db $1E,$27,$56,$71,$5C,$6C,$6F,$AD,$5C,$1E,$04,$C7,$75,$EB,$E5,$CD
 
-particledata:   
+particledata:
                 ; particles with duplicate lines
                 dg --------     ; --  0
                 dg --------     ; --
@@ -120,7 +120,7 @@ particledata:
                 dg #-#-#-#-     ; #-  2
                 dg --------     ; --
 
-                ; empty top lines                
+                ; empty top lines
                 dg --------     ; --  4
                 dg -#-#-#-#     ; -#
                 dg --------     ; --  8
