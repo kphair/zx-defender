@@ -5,8 +5,8 @@ prnd:           db 0
 thrustnoise:    db 0
 ship_dir:       db $00          ; right = $00, left = $ff
 
-camera_x:	dw 0		; Current offset
-camera_lastx:	dw 0		; Last offset (for erase run or last frame differencing)
+camera_x:       dw 0            ; Current offset
+camera_lastx:   dw 0            ; Last offset (for erase run or last frame differencing)
 
 thrust:         db 0,0,0
 
@@ -22,3 +22,4 @@ key_defs:
                 db 0
 
 baiter_fury:    db $c0
+swarmer_fury:   db $c0

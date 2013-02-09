@@ -52,13 +52,14 @@ export_sym "defender.sym",0
                 and $1f
                 xor $1f
                 jr nz, main
+                jr main
 
                 ei
 
 main:           halt
                 jp main
 
-                org $8282                
+                org $8282
 inthandler:
 
                 call show_stars
@@ -113,7 +114,7 @@ ship_right:
                 call place_2bsprite
                 ld a,(iy+spr_frm)
                 inc a                   ; increment frame number
-                cp (ix)                 ; compare to max number of frames in sprite descriptor
+                cp (ix)                 ; compare to max frames in sprite descriptor
                 ld b,a                  ; reset to 0 if no carry
                 sbc a,a
                 and b
@@ -123,7 +124,7 @@ ship_right:
                 call place_3bsprite
                 ld a,(iy+spr_frm)
                 inc a                   ; increment frame number
-                cp (ix)                 ; compare to max number of frames in sprite descriptor
+                cp (ix)                 ; compare to max frames in sprite descriptor
                 ld b,a
                 sbc a,a
                 and b

@@ -11,7 +11,7 @@ shot_wipe       equ 4
 test_fire       proc
 
                 ld a,(controls)
-		and ctrl_fire
+                and ctrl_fire
                 jr nz,animate_shots     ; if fire not pressed just animate any existing shots
                 ld a,(lastcontrols)
                 and ctrl_fire
@@ -100,6 +100,7 @@ test_shot:      ld a,(ix+shot_timer)
                 jp m,shot_left
 
 ; This section is for a shot that is traveling right
+;
 ; -  -  -- - --- ----->
 ;
                 ld e,a                  ; save copy of timer in E
@@ -179,7 +180,7 @@ fade_trail_r:   ld a,e
                 srl a
                 srl a
                 adc a,1
-;                or ATTR_BRIGHT
+                ;or ATTR_BRIGHT
                 ld (hl),a
 
                 jr shot_cycle_r
@@ -212,6 +213,7 @@ shot_cycle_r:   inc (ix+shot_timer)     ; main counter
 
 
 ; This section is for a shot traveling left
+;
 ; <----- --- - --  -  -
 ;
 shot_left:
@@ -237,7 +239,7 @@ shot_left:
                 rra
                 or $50
                 ld h,a
-                ld (hl),ATTR_INKWHT + ATTR_BRIGHT
+                ld (hl), ATTR_INKWHT + ATTR_BRIGHT
 
                 ld a,e
                 cp 1

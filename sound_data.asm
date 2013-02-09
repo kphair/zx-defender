@@ -1,5 +1,8 @@
 
                 align 256
+
+; 256 random numbers culled from AMillionRandomDigits.bin (http://marknelson.us/2006/06/20/million-digit-challenge/)
+
 noise:          db $1B,$9B,$3F,$08,$7F,$51,$55,$9F,$E8,$10,$CB,$89,$4A,$08,$4A,$04
                 db $4B,$B4,$3A,$82,$31,$A3,$56,$A5,$5C,$4C,$D6,$53,$37,$D5,$1E,$BF
                 db $97,$D1,$EB,$DC,$9D,$7A,$FE,$9A,$87,$67,$CB,$8F,$D1,$99,$C9,$BF

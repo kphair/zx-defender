@@ -159,7 +159,7 @@ test_thrust     proc
                 ld l,a
                 ld h,HIGH noise
                 ld a,(hl)
-                and 16+8
+                and $18
                 out (254),a
 
                 ld a,(ship_dir)
@@ -241,7 +241,7 @@ no_thrust:
                 ld hl,spr_idlel
 idlespr_r:      ld (sprexhaust+spr_dsc),hl
                 
-end_thrust:     ld hl,(sprexhaust+spr_dsc)      ; change the attribute of the exhaust sprite to random colour
+end_thrust:     ld hl,(sprexhaust+spr_dsc)      ; random colour for exhaust
                 inc hl
                 ld a,r
                 xor (hl)
@@ -278,31 +278,3 @@ ship_friction   proc
                 ld (thrust+2),a
         
                 retp
-
-; OLD FRICTION CODE
-
-;                ld a,(thrust+1)
-;                cpl
-;                ld l,a
-;                ld a,(thrust+2)
-;                ld c,a         ; C  = high byte
-;                cpl
-;                ld h,a
-;                inc hl         ; HL = -(thrust middle and high)
-;                xor a
-;                bit 7,h
-;                jr z,thrust_pos
-;                dec a          ; extend sign of H into A
-;thrust_pos:
-;                ld b,a
-;                ld a,h
-;                add hl,hl
-;                add hl,hl
-;                ex de,hl
-;                ld hl,(thrust)
-;                add hl,de
-;                ld a,c
-;                adc a,b
-;                ld (thrust),hl
-;                ld (thrust+2),a
-                

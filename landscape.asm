@@ -1,4 +1,5 @@
-; Unpack the binary landscape data into heights and generate display file diffs for the drawing routine.
+; Unpack the binary landscape data into heights and generate
+; display file diffs for the drawing routine.
 
 unpack_landscape proc
 
@@ -35,8 +36,8 @@ store           ld (hl),c
                 ld l,(ix)
                 ld h,(ix+1)
                 xor a
-                sbc hl,de		; Subtract last point's display file location from current
-                ld (iy),l		; store the difference
+                sbc hl,de               ; Subtract last point's display file location from current
+                ld (iy),l               ; store the difference
                 ld (iy+1),h
                 ld e,(ix)               ; make the old one the current one
                 ld d,(ix+1)
@@ -52,12 +53,12 @@ store           ld (hl),c
                 dec a
                 jr nz,do_byte
 
-		; Make a copy of the first 256 diffs to wrap around
-		ld hl,landscape_diffs
-		ld d,iyh
-		ld e,iyl
-		ld bc,512
-		ldir
+                ; Make a copy of the first 256 diffs to wrap around
+                ld hl,landscape_diffs
+                ld d,iyh
+                ld e,iyl
+                ld bc,512
+                ldir
 
                 retp
 
@@ -71,7 +72,7 @@ erase_landscape proc
 
                 ld (restore_sp+1),sp
 
-		ld hl,(camera_lastx)
+                ld hl,(camera_lastx)
                 srl h
                 rr l
                 srl h
@@ -92,31 +93,31 @@ erase_landscape proc
                 ld h,a
 
                 ld de,landscape_data
-		add hl,de
-		ld l,(hl)
-		ld a,191
-		sub l
+                add hl,de
+                ld l,(hl)
+                ld a,191
+                sub l
 
-		ld l,a
-		ld h,scanlinetable/512
-		add hl,hl
-		ld sp,hl
-                pop de			; scanline position of first pixel
+                ld l,a
+                ld h,scanlinetable/512
+                add hl,hl
+                ld sp,hl
+                pop de                  ; scanline position of first pixel
 
                 ld sp,landscape_diffs
                 ld h,b
                 ld l,c
-		add hl,hl
-		add hl,sp
-		ld sp,hl
+                add hl,hl
+                add hl,sp
+                ld sp,hl
 
-		ex de,hl
+                ex de,hl
 
                 ld b,32                 ; number of columns
                 xor a
 
 next_pixel:     
-	    	ld (hl),a
+                ld (hl),a
                 pop de
                 add hl,de
                 ld (hl),a
@@ -161,8 +162,8 @@ draw_landscape  proc
 
                 ld (restore_sp+1),sp
 
-		ld hl,(camera_x)
-		ld (camera_lastx),hl
+                ld hl,(camera_x)
+                ld (camera_lastx),hl
                 srl h
                 rr l
                 srl h
@@ -183,27 +184,27 @@ draw_landscape  proc
                 ld h,a
 
                 ld de,landscape_data
-		add hl,de
-		ld l,(hl)
-		ld a,191
-		sub l
+                add hl,de
+                ld l,(hl)
+                ld a,191
+                sub l
 
-		ld l,a
-		ld h,scanlinetable/512
-		add hl,hl
-		ld sp,hl
+                ld l,a
+                ld h,scanlinetable/512
+                add hl,hl
+                ld sp,hl
                 pop de
 
                 ld h,b
                 ld l,c
 
-		jr no_colour
+                jr no_colour
                 ld sp,$5b00
                 ld a,(land_colour)
-;                xor $05
+                ;xor $05
                 ld b,a
                 ld c,a
-;                ld (land_colour),bc
+                ;ld (land_colour),bc
 
                 
                 ld a,9
@@ -211,21 +212,21 @@ colour_land:    push bc:push bc:push bc:push bc:push bc:push bc:push bc:push bc
                 push bc:push bc:push bc:push bc:push bc:push bc:push bc:push bc
                 dec a
                 jr nz colour_land                
-		
+                
 no_colour:
 
                 ld sp,landscape_diffs
-		add hl,hl
-		add hl,sp
-		ld sp,hl
+                add hl,hl
+                add hl,sp
+                ld sp,hl
 
-		ex de,hl
+                ex de,hl
 
                 ld c,$80                ; pixel mask
                 ld b,32                 ; number of columns
 
 next_pixel:     
-    		ld (hl),c
+                ld (hl),c
                 pop de
                 add hl,de
                 rrc c
@@ -406,7 +407,7 @@ restoresp:      ld sp,0
 
 align 2
 
-landscape_diffs: ds (2048+256)*2
+landscape_diffs:ds (2048+256)*2
 
 landscape_bin:  db $2A,$AA,$AA,$AA,$AA,$AA,$AB,$A1,$D5,$55,$55,$55,$55,$55,$AA,$BF
                 db $FF,$FF,$FF,$C0,$00,$00,$00,$55,$55,$57,$FF,$C0,$01,$55,$55,$55
