@@ -14,15 +14,26 @@ This is still very much a work in progress while I work on disassembling the ori
 The following is a list of current source files and a rough description of their function
 
  charset.asm          The character set used by the game
+ 
 	defender.asm         The main game loop and initialisation code
+	
 	fx.asm               General special effects
+	
 	input.asm            User input handling
+	
 	landscape.asm        Drawing and erasing the scrolling landscape
+	
 	screen.asm           General purpose display-related subroutines
+	
 	sprite_code.asm      Code for managing sprites
+	
 	sprite_data.asm      Graphic data for the sprites
+	
 	sprite_macro.asm     Macros used by the sprite management code
+	
 	tables.asm           Lookup tables for screen address translation and other stuff
+	
 	vars.asm             Most of the variables used by the code
+	
 	view.asm             Camera management routines to handle the panning and inertia effects
 	
